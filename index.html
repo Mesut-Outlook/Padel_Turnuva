@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Padel Bireysel Mexicano</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['Outfit', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'neon-emerald': '0 0 15px rgba(16, 185, 129, 0.4)',
+                        'neon-indigo': '0 0 15px rgba(99, 102, 241, 0.4)',
+                        'gold': '0 0 15px rgba(245, 158, 11, 0.4)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+        h1, h2, h3, h4, .font-display {
+            font-family: 'Outfit', sans-serif;
+        }
+        /* Custom scrollbar for beautiful visual styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .loader {
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid #34d399;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .silver-glow {
+            box-shadow: 0 0 15px rgba(148, 163, 184, 0.15);
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .bronze-glow {
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.1);
+            border: 1px solid rgba(217, 119, 6, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-8 text-slate-100 flex items-center justify-center">
+
+    <!-- Uyarı Toast Mesajı -->
+    <div id="warningToast" class="fixed top-10 left-1/2 transform -translate-x-1/2 bg-rose-600/90 backdrop-blur-md text-white font-bold px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 translate-y-[-20px] w-11/12 text-center max-w-md text-sm border border-rose-500/30 flex items-center justify-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+        <span id="warningToastMsg">Uyarı Mesajı</span>
+    </div>
+
+    <div class="w-full max-w-3xl bg-slate-900/60 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-slate-800/80 my-2 md:my-6 relative">
+        
+        <!-- Header background decoration -->
+        <div class="absolute top-0 left-0 right-0 h-48 bg-gradient-to-b from-emerald-500/10 via-indigo-500/5 to-transparent pointer-events-none"></div>
+
+        <!-- Başlık -->
+        <div class="relative p-6 md:p-8 text-center border-b border-slate-800">
+            <div id="connection-status" class="absolute top-4 right-4 bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-1 rounded-full animate-pulse shadow-md transition-all duration-300">
+                Bağlanıyor...
+            </div>
+            
+            <div class="inline-flex items-center justify-center p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 mb-4 animate-pulse">
+                <span class="text-4xl">🎾</span>
+            </div>
+            
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-white font-display bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">
+                Padel Bireysel Mexicano
+            </h1>
+
+            <!-- Aktif Turnuva Bilgileri & Ayarlar Butonu -->
+            <div class="mt-5 p-4 bg-slate-950/40 border border-slate-800/80 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
+                <div class="text-left space-y-1 w-full sm:w-auto">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/20 px-2.5 py-0.5 rounded-full font-bold">Aktif Turnuva</span>
+                        <span id="active-tourney-name" class="font-extrabold text-white text-base">Ana Turnuva</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
+                        <span id="active-tourney-court" class="flex items-center gap-1">📍 Kort 1 & 2</span>
+                        <span id="active-tourney-time" class="flex items-center gap-1">🕒 Belirtilmedi</span>
+                    </div>
+                </div>
+                <button id="openSettingsBtn" class="shrink-0 w-full sm:w-auto bg-slate-800 hover:bg-slate-700 active:scale-95 text-indigo-300 hover:text-indigo-200 border border-slate-700/50 font-bold py-2.5 px-4 rounded-xl transition flex justify-center items-center gap-1.5 text-xs shadow-md">
+                    ⚙️ Turnuva & Oyuncu Ayarları
+                </button>
+            </div>
+        </div>
+
+        <div class="p-4 md:p-8 space-y-8 relative">
+            
+            <!-- Kurallar -->
+            <div class="bg-indigo-950/40 border border-indigo-500/20 text-indigo-200 p-5 rounded-2xl text-sm shadow-inner flex gap-3.5 items-start">
+                <div class="p-2 bg-indigo-500/10 rounded-xl text-indigo-400 border border-indigo-500/20 shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <strong class="text-indigo-300 font-semibold block mb-1">Mexicano Kuralı:</strong> 
+                    Maçlar 24 sayıda biter. Skor <strong class="text-white">23-23</strong> olursa tie-break oynanır, ancak sisteme her zaman <strong class="text-white">24-23</strong> olarak girilir. Kazanan takımın her bir oyuncusu <strong class="text-emerald-400 font-bold">+5 bonus puan</strong> (toplamda 29 puan) alır.
+                </div>
+            </div>
+
+            <!-- Liderlik Tablosu -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white flex items-center gap-2.5 font-display">
+                        <span class="p-2 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">🏆</span>
+                        Canlı Sıralama Tablosu
+                    </h3>
+                    <span class="text-xs bg-slate-800 px-3 py-1 rounded-full text-slate-400 border border-slate-700/50">Anlık Güncel</span>
+                </div>
+                
+                <div class="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-900/40 backdrop-blur-md shadow-lg overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-800">
+                        <thead class="bg-slate-950/60">
+                            <tr>
+                                <th scope="col" class="px-5 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider w-20">Sıra</th>
+                                <th scope="col" class="px-5 py-4 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider">Oyuncu</th>
+                                <th scope="col" class="px-5 py-4 text-center text-xs font-semibold text-slate-400 uppercase tracking-wider w-32">Toplam Puan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboard-body" class="divide-y divide-slate-800/60">
+                            <!-- Tablo JS ile doldurulacak -->
+                            <tr>
+                                <td colspan="3" class="text-center py-10 text-slate-400">
+                                    <div class="flex flex-col items-center justify-center gap-3">
+                                        <div class="loader"></div>
+                                        <span class="text-sm font-medium">Veriler yükleniyor...</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Turlar ve Maçlar -->
+            <div class="space-y-4">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2.5 font-display">
+                    <span class="p-2 bg-indigo-500/10 text-indigo-400 rounded-xl border border-indigo-500/20">🎾</span>
+                    Turnuva Turları ve Maç Skorları
+                </h3>
+                <div id="rounds-container" class="space-y-6">
+                    <!-- Turlar JS ile buraya çizilecek -->
+                </div>
+            </div>
+
+            <!-- Aksiyon Butonları -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800/80">
+                <button id="newRoundBtn" class="relative group bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-neon-indigo flex justify-center items-center gap-2.5 overflow-hidden">
+                    <div class="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>YENİ TUR OLUŞTUR</span>
+                </button>
+
+                <button id="saveBtn" class="bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition-all duration-300 hover:shadow-neon-emerald flex justify-center items-center gap-2.5 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>SKORLARI KAYDET VE GÜNCELLE</span>
+                </button>
+            </div>
+
+            <div class="pt-6">
+                <button id="resetModalBtn" class="w-full bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 font-bold py-3 px-6 rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 text-sm border border-rose-900/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    <span>AKTİF TURNUVAYI SIFIRLA</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ayarlar Modalı -->
+    <div id="settingsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden flex items-center justify-center z-50 px-4 transition-all duration-300 opacity-0">
+        <div class="bg-slate-900 rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-800 max-h-[90vh] flex flex-col transform scale-90 transition-transform duration-300">
+            
+            <!-- Modal Başlık -->
+            <div class="flex justify-between items-center pb-4 border-b border-slate-800 mb-4 shrink-0">
+                <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                    ⚙️ Turnuva & Oyuncu Yönetimi
+                </h3>
+                <button id="closeSettingsBtn" class="text-slate-400 hover:text-white transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Tab Seçimleri -->
+            <div class="flex gap-2 mb-4 shrink-0 bg-slate-950 p-1.5 rounded-xl border border-slate-800/80">
+                <button id="tabPlayersBtn" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition bg-indigo-600 text-white">👥 Kadro Havuzu</button>
+                <button id="tabTourneysBtn" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-slate-200">🏆 Turnuvalar</button>
+                <button id="tabDetailsBtn" class="flex-1 py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-slate-200">ℹ️ Detaylar</button>
+            </div>
+            
+            <!-- Tab İçerikleri -->
+            <div class="flex-1 overflow-y-auto pr-1 space-y-4 min-h-[300px]">
+                
+                <!-- Oyuncu Kadrosu İçeriği -->
+                <div id="tabPlayersContent" class="space-y-4">
+                    <div class="flex gap-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800/60">
+                        <input type="text" id="newPlayerNameInput" placeholder="Yeni oyuncu adı..." class="flex-1 bg-slate-900 border border-slate-800 focus:border-indigo-500 focus:outline-none text-white rounded-xl px-3 py-2 text-sm font-semibold">
+                        <button id="addPlayerBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition shrink-0">Ekle</button>
+                    </div>
+                    
+                    <div class="flex items-center justify-between text-xs font-extrabold text-slate-400 px-1">
+                        <span>AD (DÜZENLEMEK İÇİN TIKLAYIN)</span>
+                        <span id="activeCountBadge" class="bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-bold">Seçili: 8/8</span>
+                    </div>
+                    
+                    <div id="playersPoolList" class="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                        <!-- Dinamik Oyuncu Listesi -->
+                    </div>
+                </div>
+                
+                <!-- Turnuvalar İçeriği -->
+                <div id="tabTourneysContent" class="space-y-4 hidden">
+                    <button id="createTourneyBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-xl text-sm transition flex justify-center items-center gap-2 shadow-lg">
+                        ➕ Yeni Turnuva Oluştur
+                    </button>
+                    <div id="tourneysList" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                        <!-- Dinamik Turnuvalar Listesi -->
+                    </div>
+                </div>
+                
+                <!-- Detaylar İçeriği -->
+                <div id="tabDetailsContent" class="space-y-4 hidden">
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">Turnuva Adı</label>
+                        <input type="text" id="editTourneyName" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">🏟️ Kort Yeri / Tesis</label>
+                        <input type="text" id="editTourneyCourt" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">🕒 Turnuva Zamanı / Saati</label>
+                        <input type="text" id="editTourneyTime" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Alt Bilgisi -->
+            <div class="pt-4 border-t border-slate-800 mt-4 shrink-0 flex justify-end">
+                <button id="saveSettingsBtn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition shadow-lg shadow-indigo-950/20">
+                    Değişiklikleri Kaydet
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sıfırlama Onay Modalı -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md hidden flex items-center justify-center z-50 px-4 transition-all duration-350 opacity-0">
+        <div class="bg-slate-900 rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl border border-slate-800 transform scale-90 transition-transform duration-300">
+            <div class="flex items-center justify-center w-14 h-14 rounded-2xl bg-rose-500/10 border border-rose-500/20 mx-auto mb-5 text-rose-500">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-center text-white mb-2 font-display">Sıfırlansın mı?</h3>
+            <p class="text-slate-400 text-center text-sm mb-6 leading-relaxed">Aktif turnuvanın tüm maç skorları silinecek ve puanlar sıfırlanacaktır. Bu işlem geri alınamaz.</p>
+            <div class="flex gap-3">
+                <button id="cancelResetBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold py-3.5 rounded-xl transition border border-slate-700/50">İptal</button>
+                <button id="confirmResetBtn" class="flex-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-rose-950/20">Evet, Sıfırla</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shimmer Animation Helper Keyframes -->
+    <style>
+        @keyframes shimmer {
+            100% { transform: translateX(200%); }
+        }
+    </style>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        
+        let app, auth, db, tourneyDocRef;
+        let isOfflineMode = false;
+        let currentUser = null;
+        let tournamentData = null;
+
+        // Varsayılan İlk Katılımcı Listesi
+        const initialPlayers = [
+            { id: "p1", name: "Zafer" },
+            { id: "p2", name: "Mesut" },
+            { id: "p3", name: "Bihter" },
+            { id: "p4", name: "Okan" },
+            { id: "p5", name: "Fırat" },
+            { id: "p6", name: "Burcu" },
+            { id: "p7", name: "Murat ÇALIŞAL" },
+            { id: "p8", name: "Serhat" }
+        ];
+
+        const connectionStatus = document.getElementById('connection-status');
+        const roundsContainer = document.getElementById('rounds-container');
+        const leaderboardBody = document.getElementById('leaderboard-body');
+        const newRoundBtn = document.getElementById('newRoundBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const warningToast = document.getElementById('warningToast');
+        const warningToastMsg = document.getElementById('warningToastMsg');
+        
+        const resetModalBtn = document.getElementById('resetModalBtn');
+        const confirmModal = document.getElementById('confirmModal');
+        const cancelResetBtn = document.getElementById('cancelResetBtn');
+        const confirmResetBtn = document.getElementById('confirmResetBtn');
+
+        // Ayarlar Arayüz Elemanları
+        const openSettingsBtn = document.getElementById('openSettingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+        const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+        
+        const tabPlayersBtn = document.getElementById('tabPlayersBtn');
+        const tabTourneysBtn = document.getElementById('tabTourneysBtn');
+        const tabDetailsBtn = document.getElementById('tabDetailsBtn');
+        
+        const tabPlayersContent = document.getElementById('tabPlayersContent');
+        const tabTourneysContent = document.getElementById('tabTourneysContent');
+        const tabDetailsContent = document.getElementById('tabDetailsContent');
+        
+        const newPlayerNameInput = document.getElementById('newPlayerNameInput');
+        const addPlayerBtn = document.getElementById('addPlayerBtn');
+        const playersPoolList = document.getElementById('playersPoolList');
+        const activeCountBadge = document.getElementById('activeCountBadge');
+        
+        const createTourneyBtn = document.getElementById('createTourneyBtn');
+        const tourneysList = document.getElementById('tourneysList');
+        
+        const editTourneyName = document.getElementById('editTourneyName');
+        const editTourneyCourt = document.getElementById('editTourneyCourt');
+        const editTourneyTime = document.getElementById('editTourneyTime');
+
+        const activeTourneyNameDisp = document.getElementById('active-tourney-name');
+        const activeTourneyCourtDisp = document.getElementById('active-tourney-court');
+        const activeTourneyTimeDisp = document.getElementById('active-tourney-time');
+
+        // Uyarı Gösterme Fonksiyonu
+        function showWarning(message) {
+            warningToastMsg.textContent = message;
+            warningToast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+            warningToast.classList.add('opacity-100', 'translate-y-0');
+            setTimeout(() => {
+                warningToast.classList.remove('opacity-100', 'translate-y-0');
+                warningToast.classList.add('opacity-0', 'pointer-events-none', 'translate-y-[-20px]');
+            }, 3500);
+        }
+
+        // Yerel Veri Kaydetme ve Yükleme
+        function backupDataLocally(data) {
+            try {
+                localStorage.setItem('padel_mexicano_backup', JSON.stringify(data));
+            } catch(e) { console.error("Yerel kayıt başarısız"); }
+        }
+
+        // Veri Yapısını Yeni Formata Dönüştürme/Migrasyon
+        function migrateOldData(oldData) {
+            if (oldData && oldData.rounds && !oldData.tournaments) {
+                // Eski tek turnuvalı yapıyı çoklu turnuva yapısına dönüştür
+                const oldPlayers = oldData.players || initialPlayers.map(p => ({...p, score: 0}));
+                const pool = oldPlayers.map(p => ({ id: p.id, name: p.name }));
+                const activeIds = pool.map(p => p.id);
+                return {
+                    playersPool: pool,
+                    tournaments: [
+                        {
+                            id: "default-tourney",
+                            name: "Ana Turnuva",
+                            court: "Kort 1 & 2",
+                            time: "Belirtilmedi",
+                            activePlayerIds: activeIds,
+                            rounds: oldData.rounds || []
+                        }
+                    ],
+                    currentTournamentId: "default-tourney"
+                };
+            }
+            
+            if (oldData && oldData.tournaments && oldData.playersPool) {
+                return oldData;
+            }
+
+            // Varsayılan State Oluştur
+            return {
+                playersPool: [...initialPlayers],
+                tournaments: [
+                    {
+                        id: "t1",
+                        name: "Mexicano Turnuvası 1",
+                        court: "Kort 1 & 2",
+                        time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
+                        activePlayerIds: initialPlayers.map(p => p.id),
+                        rounds: []
+                    }
+                ],
+                currentTournamentId: "t1"
+            };
+        }
+
+        function loadLocalFallback() {
+            isOfflineMode = true;
+            connectionStatus.textContent = '📵 Çevrimdışı (Yerel)';
+            connectionStatus.className = 'absolute top-4 right-4 bg-amber-600/20 text-amber-300 border border-amber-500/30 text-xs font-semibold px-3 py-1 rounded-full shadow-md';
+            
+            let localData = localStorage.getItem('padel_mexicano_backup');
+            if (localData) {
+                tournamentData = migrateOldData(JSON.parse(localData));
+            } else {
+                tournamentData = migrateOldData(null);
+                backupDataLocally(tournamentData);
+            }
+            
+            updateHeaderDisplay();
+            renderLeaderboard();
+            renderRounds();
+            updateButtonStates();
+        }
+
+        async function initAuth() {
+            try {
+                if (Object.keys(firebaseConfig).length === 0) throw new Error("Firebase Config Yok");
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                tourneyDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'mexicano', 'state');
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) listenToTournament();
+                });
+
+            } catch (error) {
+                console.warn("Bağlantı koptu veya kurulamadı, Yerel Moda geçiliyor.", error);
+                loadLocalFallback();
+            }
+        }
+
+        function updateButtonStates() {
+            const activeTourney = getActiveTournament();
+            if (activeTourney && activeTourney.rounds && activeTourney.rounds.length > 0) {
+                saveBtn.classList.remove('hidden');
+                newRoundBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>SONRAKİ TURU OLUŞTUR</span>
+                `;
+            } else {
+                saveBtn.classList.add('hidden');
+                newRoundBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span>1. TURU OLUŞTUR (RASTGELE)</span>
+                `;
+            }
+        }
+
+        function listenToTournament() {
+            onSnapshot(tourneyDocRef, (docSnap) => {
+                isOfflineMode = false;
+                if (docSnap.exists()) {
+                    tournamentData = migrateOldData(docSnap.data());
+                } else {
+                    tournamentData = migrateOldData(null);
+                    setDoc(tourneyDocRef, tournamentData);
+                }
+                
+                backupDataLocally(tournamentData);
+                
+                connectionStatus.textContent = '🟢 Canlı Aktif';
+                connectionStatus.className = 'absolute top-4 right-4 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold px-3 py-1 rounded-full shadow-md animate-none';
+                
+                updateHeaderDisplay();
+                renderLeaderboard();
+                renderRounds();
+                updateButtonStates();
+                
+            }, (error) => {
+                console.error("DB dinleme hatası, yerel moda geçiliyor:", error);
+                loadLocalFallback();
+            });
+        }
+
+        // Aktif Turnuvayı Getirme Yardımcısı
+        function getActiveTournament() {
+            if (!tournamentData) return null;
+            let active = tournamentData.tournaments.find(t => t.id === tournamentData.currentTournamentId);
+            if (!active && tournamentData.tournaments.length > 0) {
+                // Aktif turnuva bulunamazsa ilk turnuvayı seç
+                tournamentData.currentTournamentId = tournamentData.tournaments[0].id;
+                active = tournamentData.tournaments[0];
+            }
+            return active;
+        }
+
+        // Header Bilgilerini Güncelleme
+        function updateHeaderDisplay() {
+            const activeTourney = getActiveTournament();
+            if (activeTourney) {
+                activeTourneyNameDisp.textContent = activeTourney.name || "İsimsiz Turnuva";
+                activeTourneyCourtDisp.innerHTML = `🏟️ ${activeTourney.court || "Kort Belirtilmedi"}`;
+                activeTourneyTimeDisp.innerHTML = `🕒 ${activeTourney.time || "Saat Belirtilmedi"}`;
+            }
+        }
+
+        // Sıralama Hesaplama ve Çizim
+        function renderLeaderboard() {
+            if (!tournamentData) return;
+            const activeTourney = getActiveTournament();
+            if (!activeTourney) return;
+
+            // Aktif kadro oyuncularını havuzdan eşleştirip skorlarını sıfırla
+            let tempPlayers = activeTourney.activePlayerIds.map(id => {
+                const poolP = tournamentData.playersPool.find(p => p.id === id);
+                return {
+                    id: id,
+                    name: poolP ? poolP.name : "Silinmiş Oyuncu",
+                    score: 0
+                };
+            });
+            
+            // Skorları hesapla
+            if (activeTourney.rounds) {
+                activeTourney.rounds.forEach(round => {
+                    round.matches.forEach(match => {
+                        let s1 = parseInt(match.score1);
+                        let s2 = parseInt(match.score2);
+                        
+                        if (!isNaN(s1) && !isNaN(s2)) {
+                            let pts1 = s1 >= 24 ? s1 + 5 : s1;
+                            let pts2 = s2 >= 24 ? s2 + 5 : s2;
+                            
+                            let p1a = tempPlayers.find(p => p.id === match.t1p1.id);
+                            let p1b = tempPlayers.find(p => p.id === match.t1p2.id);
+                            if(p1a) p1a.score += pts1;
+                            if(p1b) p1b.score += pts1;
+
+                            let p2a = tempPlayers.find(p => p.id === match.t2p1.id);
+                            let p2b = tempPlayers.find(p => p.id === match.t2p2.id);
+                            if(p2a) p2a.score += pts2;
+                            if(p2b) p2b.score += pts2;
+                        }
+                    });
+                });
+            }
+
+            tempPlayers.sort((a, b) => b.score - a.score);
+
+            leaderboardBody.innerHTML = '';
+            tempPlayers.forEach((player, index) => {
+                let rankClass = "";
+                let glowClass = "";
+                let icon = "";
+                
+                if (index === 0) {
+                    rankClass = "bg-gradient-to-r from-amber-500/20 via-amber-600/10 to-transparent text-amber-300 font-bold";
+                    glowClass = "gold-glow";
+                    icon = "🥇";
+                } else if (index === 1) {
+                    rankClass = "bg-gradient-to-r from-slate-400/10 to-transparent text-slate-300 font-bold";
+                    glowClass = "silver-glow";
+                    icon = "🥈";
+                } else if (index === 2) {
+                    rankClass = "bg-gradient-to-r from-amber-800/10 to-transparent text-amber-500 font-bold";
+                    glowClass = "bronze-glow";
+                    icon = "🥉";
+                } else {
+                    rankClass = "text-slate-300 hover:bg-slate-800/20";
+                }
+                
+                const tr = document.createElement('tr');
+                tr.className = `${rankClass} transition-colors duration-250`;
+                tr.innerHTML = `
+                    <td class="px-5 py-4 whitespace-nowrap text-sm font-display font-bold">
+                        <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg ${index < 3 ? glowClass + ' bg-slate-900/80' : 'bg-slate-800 text-slate-400'}">
+                            ${index < 3 ? icon : index + 1}
+                        </span>
+                    </td>
+                    <td class="px-5 py-4 whitespace-nowrap text-sm font-semibold tracking-wide">${player.name}</td>
+                    <td class="px-5 py-4 whitespace-nowrap text-center text-base font-extrabold tracking-wider ${index === 0 ? 'text-amber-400' : 'text-emerald-400'}">${player.score} Puan</td>
+                `;
+                leaderboardBody.appendChild(tr);
+            });
+        }
+
+        // Stepper skor değiştiricisi
+        window.adjustScore = function(id, val) {
+            const input = document.getElementById(id);
+            if (!input) return;
+            let current = parseInt(input.value) || 0;
+            let newVal = current + val;
+            if (newVal > 24) newVal = 24;
+            if (newVal < 0) newVal = 0;
+            input.value = newVal;
+            
+            const event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        };
+
+        function updateRealtimeBadges(roundIdx, matchIdx) {
+            const idPrefix = `r${roundIdx}_m${matchIdx}`;
+            const s1El = document.getElementById(`${idPrefix}_s1`);
+            const s2El = document.getElementById(`${idPrefix}_s2`);
+            
+            const badge1 = document.getElementById(`${idPrefix}_b1`);
+            const badge2 = document.getElementById(`${idPrefix}_b2`);
+            
+            if (!s1El || !s2El || !badge1 || !badge2) return;
+            
+            const s1 = parseInt(s1El.value);
+            const s2 = parseInt(s2El.value);
+            
+            badge1.innerHTML = '';
+            badge2.innerHTML = '';
+            
+            if (!isNaN(s1) && !isNaN(s2)) {
+                if (s1 >= 24) {
+                    badge1.innerHTML = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">🏆 +5 Bonus</span>';
+                    badge2.innerHTML = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">Kaybetti</span>';
+                } else if (s2 >= 24) {
+                    badge2.innerHTML = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 animate-pulse">🏆 +5 Bonus</span>';
+                    badge1.innerHTML = '<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">Kaybetti</span>';
+                } else {
+                    badge1.innerHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400">Oynanıyor</span>';
+                    badge2.innerHTML = '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-400">Oynanıyor</span>';
+                }
+            }
+        }
+
+        // Turları Çizme
+        function renderRounds() {
+            const activeTourney = getActiveTournament();
+            if (!activeTourney || !activeTourney.rounds) return;
+            roundsContainer.innerHTML = '';
+
+            activeTourney.rounds.forEach((round, roundIndex) => {
+                const roundDiv = document.createElement('div');
+                roundDiv.className = 'border-l-4 border-indigo-500 bg-slate-900/30 p-4 md:p-6 rounded-r-2xl shadow-lg border-t border-r border-b border-slate-800/80 backdrop-blur-sm transition-all duration-300 hover:border-slate-700/80';
+                
+                let roundHtml = `
+                <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
+                    <h2 class="text-xl font-bold font-display text-indigo-400 flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/25 text-sm">${roundIndex + 1}</span>
+                        <span>${roundIndex + 1}. TUR</span>
+                    </h2>
+                    <span class="text-xs text-indigo-300/60 font-semibold tracking-wide">Dinamik Eşleştirme</span>
+                </div>`;
+
+                round.matches.forEach((match, matchIndex) => {
+                    const idPrefix = `r${roundIndex}_m${matchIndex}`;
+                    
+                    const score1Val = match.score1 !== null ? match.score1 : '';
+                    const score2Val = match.score2 !== null ? match.score2 : '';
+                    
+                    // Oyuncu İsimlerini havuzdan al (anlık güncellemeyi yansıtması için)
+                    const t1p1Name = tournamentData.playersPool.find(p => p.id === match.t1p1.id)?.name || match.t1p1.name;
+                    const t1p2Name = tournamentData.playersPool.find(p => p.id === match.t1p2.id)?.name || match.t1p2.name;
+                    const t2p1Name = tournamentData.playersPool.find(p => p.id === match.t2p1.id)?.name || match.t2p1.name;
+                    const t2p2Name = tournamentData.playersPool.find(p => p.id === match.t2p2.id)?.name || match.t2p2.name;
+
+                    roundHtml += `
+                    <div class="bg-slate-950/40 border border-slate-800/60 hover:border-slate-700/40 transition-all duration-300 rounded-2xl p-4 mb-4">
+                        <div class="flex justify-between items-center text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest border-b border-slate-900/60 pb-1.5">
+                            <span>🏟️ Kort ${matchIndex + 1}</span>
+                            <span class="text-indigo-400/80">Kort ${matchIndex + 1} Maçı</span>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <!-- Team 1 Card -->
+                            <div class="flex justify-between items-center bg-slate-900/60 hover:bg-slate-900/90 transition p-3 rounded-xl border border-slate-800/60">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="flex flex-col min-w-0">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm font-bold text-slate-100 truncate">${t1p1Name}</span>
+                                            <span class="text-slate-600 text-xs font-semibold">&amp;</span>
+                                            <span class="text-sm font-bold text-slate-100 truncate">${t1p2Name}</span>
+                                        </div>
+                                        <div id="${idPrefix}_b1" class="mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" onclick="adjustScore('${idPrefix}_s1', -1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 active:scale-95 transition font-bold text-base flex items-center justify-center border border-slate-700/40 select-none">-</button>
+                                    <input type="number" id="${idPrefix}_s1" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${score1Val}" class="w-14 h-10 text-center border-2 border-slate-700 rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition font-extrabold text-base text-white score-input bg-slate-950 font-display">
+                                    <button type="button" onclick="adjustScore('${idPrefix}_s1', 1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 active:scale-95 transition font-bold text-base flex items-center justify-center border border-slate-700/40 select-none">+</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Team 2 Card -->
+                            <div class="flex justify-between items-center bg-slate-900/60 hover:bg-slate-900/90 transition p-3 rounded-xl border border-slate-800/60">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="flex flex-col min-w-0">
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm font-bold text-slate-100 truncate">${t2p1Name}</span>
+                                            <span class="text-slate-600 text-xs font-semibold">&amp;</span>
+                                            <span class="text-sm font-bold text-slate-100 truncate">${t2p2Name}</span>
+                                        </div>
+                                        <div id="${idPrefix}_b2" class="mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button type="button" onclick="adjustScore('${idPrefix}_s2', -1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 active:scale-95 transition font-bold text-base flex items-center justify-center border border-slate-700/40 select-none">-</button>
+                                    <input type="number" id="${idPrefix}_s2" inputmode="numeric" pattern="[0-9]*" placeholder="0" value="${score2Val}" class="w-14 h-10 text-center border-2 border-slate-700 rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition font-extrabold text-base text-white score-input bg-slate-950 font-display">
+                                    <button type="button" onclick="adjustScore('${idPrefix}_s2', 1)" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 active:scale-95 transition font-bold text-base flex items-center justify-center border border-slate-700/40 select-none">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+
+                roundDiv.innerHTML = roundHtml;
+                roundsContainer.appendChild(roundDiv);
+                
+                round.matches.forEach((match, matchIndex) => {
+                    updateRealtimeBadges(roundIndex, matchIndex);
+                });
+            });
+
+            document.querySelectorAll('.score-input').forEach(input => {
+                input.addEventListener('input', function() {
+                    let val = parseInt(this.value);
+                    if (val > 24) {
+                        this.value = 24;
+                        showWarning("Uzatmada bile en fazla 24 girilebilir! (24-23)");
+                    } else if (val < 0) {
+                        this.value = 0;
+                    }
+                    
+                    const match = this.id.match(/r(\d+)_m(\d+)_s/);
+                    if (match) {
+                        updateRealtimeBadges(parseInt(match[1]), parseInt(match[2]));
+                    }
+                });
+            });
+        }
+
+        // Yeni Tur Oluşturma
+        newRoundBtn.addEventListener('click', async () => {
+            if (!tournamentData) return;
+            const activeTourney = getActiveTournament();
+            if (!activeTourney) return;
+
+            // KADRO DOĞRULAMASI
+            if (activeTourney.activePlayerIds.length !== 8) {
+                showWarning(`Turnuvaya başlamak için tam olarak 8 aktif oyuncu seçmelisiniz. (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
+                openSettingsModal();
+                showTab('players');
+                return;
+            }
+            
+            // ÖNCEKİ TUR DOĞRULAMASI
+            if (activeTourney.rounds && activeTourney.rounds.length > 0) {
+                const lastRound = activeTourney.rounds[activeTourney.rounds.length - 1];
+                let isLastRoundComplete = true;
+                
+                for (let i = 0; i < lastRound.matches.length; i++) {
+                    const match = lastRound.matches[i];
+                    const s1El = document.getElementById(`r${activeTourney.rounds.length - 1}_m${i}_s1`);
+                    const s2El = document.getElementById(`r${activeTourney.rounds.length - 1}_m${i}_s2`);
+                    
+                    const score1 = s1El ? s1El.value : match.score1;
+                    const score2 = s2El ? s2El.value : match.score2;
+                    
+                    if (score1 === '' || score2 === '' || score1 === null || score2 === null) {
+                        isLastRoundComplete = false;
+                        break;
+                    }
+                }
+                
+                if (!isLastRoundComplete) {
+                    showWarning("Lütfen yeni tura geçmeden önce mevcut turdaki tüm maç skorlarını girip kaydedin!");
+                    return;
+                }
+            }
+
+            const originalBtnContent = newRoundBtn.innerHTML;
+            newRoundBtn.innerHTML = '⏳ OLUŞTURULUYOR...';
+            newRoundBtn.disabled = true;
+
+            // Sıralamaya göre oyuncu listesini havuzdan eşleştirip al
+            let tempPlayers = activeTourney.activePlayerIds.map(id => {
+                const poolP = tournamentData.playersPool.find(p => p.id === id);
+                return {
+                    id: id,
+                    name: poolP ? poolP.name : "Silinmiş Oyuncu",
+                    score: 0
+                };
+            });
+
+            // Sıralama skorlarını hesapla
+            if (activeTourney.rounds) {
+                activeTourney.rounds.forEach(round => {
+                    round.matches.forEach(match => {
+                        let s1 = parseInt(match.score1);
+                        let s2 = parseInt(match.score2);
+                        if (!isNaN(s1) && !isNaN(s2)) {
+                            let pts1 = s1 >= 24 ? s1 + 5 : s1;
+                            let pts2 = s2 >= 24 ? s2 + 5 : s2;
+                            let p1a = tempPlayers.find(p => p.id === match.t1p1.id);
+                            let p1b = tempPlayers.find(p => p.id === match.t1p2.id);
+                            if(p1a) p1a.score += pts1;
+                            if(p1b) p1b.score += pts1;
+                            let p2a = tempPlayers.find(p => p.id === match.t2p1.id);
+                            let p2b = tempPlayers.find(p => p.id === match.t2p2.id);
+                            if(p2a) p2a.score += pts2;
+                            if(p2b) p2b.score += pts2;
+                        }
+                    });
+                });
+            }
+
+            // Sıralamaya göre azalan şekilde sırala
+            tempPlayers.sort((a, b) => b.score - a.score);
+
+            let playersList = [...tempPlayers];
+            let newMatches = [];
+
+            if (!activeTourney.rounds || activeTourney.rounds.length === 0) {
+                // RASTGELE 1. TUR
+                for (let i = playersList.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [playersList[i], playersList[j]] = [playersList[j], playersList[i]];
+                }
+                newMatches.push({ t1p1: playersList[0], t1p2: playersList[1], t2p1: playersList[2], t2p2: playersList[3], score1: null, score2: null });
+                newMatches.push({ t1p1: playersList[4], t1p2: playersList[5], t2p1: playersList[6], t2p2: playersList[7], score1: null, score2: null });
+            } else {
+                // MEXICANO EŞLEŞTİRME ALGORİTMASI
+                newMatches.push({ t1p1: playersList[0], t1p2: playersList[7], t2p1: playersList[3], t2p2: playersList[4], score1: null, score2: null });
+                newMatches.push({ t1p1: playersList[1], t1p2: playersList[6], t2p1: playersList[2], t2p2: playersList[5], score1: null, score2: null });
+            }
+
+            const newRoundsArray = activeTourney.rounds ? [...activeTourney.rounds] : [];
+            newRoundsArray.push({ matches: newMatches });
+            activeTourney.rounds = newRoundsArray;
+
+            try {
+                if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                backupDataLocally(tournamentData);
+                if(isOfflineMode) { renderLeaderboard(); renderRounds(); updateButtonStates(); }
+            } catch (e) {
+                console.error("Kayıt hatası:", e);
+                loadLocalFallback();
+            } finally {
+                newRoundBtn.disabled = false;
+                newRoundBtn.innerHTML = originalBtnContent;
+            }
+        });
+
+        // Skorları Kaydetme
+        saveBtn.addEventListener('click', async () => {
+            if (!tournamentData) return;
+            const activeTourney = getActiveTournament();
+            if (!activeTourney || !activeTourney.rounds) return;
+
+            const originalHtml = saveBtn.innerHTML;
+            saveBtn.innerHTML = '⏳ KAYDEDİLİYOR...';
+            saveBtn.disabled = true;
+
+            let updatedRounds = [...activeTourney.rounds];
+            let hasValidationError = false;
+
+            updatedRounds.forEach((round, rIdx) => {
+                round.matches.forEach((match, mIdx) => {
+                    const s1El = document.getElementById(`r${rIdx}_m${mIdx}_s1`);
+                    const s2El = document.getElementById(`r${rIdx}_m${mIdx}_s2`);
+                    
+                    if (s1El && s1El.value !== '') match.score1 = parseInt(s1El.value);
+                    if (s2El && s2El.value !== '') match.score2 = parseInt(s2El.value);
+                    
+                    if (s1El && s1El.value !== '' && s2El && s2El.value !== '') {
+                        const s1 = parseInt(s1El.value);
+                        const s2 = parseInt(s2El.value);
+                        
+                        if (s1 === 24 && s2 === 24) {
+                            hasValidationError = true;
+                            showWarning(`${rIdx + 1}. Tur Kort ${mIdx + 1}: İki takım birden 24 alamaz!`);
+                        } else if (s1 < 24 && s2 < 24) {
+                            hasValidationError = true;
+                            showWarning(`${rIdx + 1}. Tur Kort ${mIdx + 1}: Maç en az bir takım 24 puana ulaşınca biter!`);
+                        }
+                    }
+                });
+            });
+
+            if (hasValidationError) {
+                saveBtn.innerHTML = originalHtml;
+                saveBtn.disabled = false;
+                return;
+            }
+
+            activeTourney.rounds = updatedRounds;
+
+            try {
+                if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                backupDataLocally(tournamentData);
+                renderLeaderboard();
+                if(isOfflineMode) { 
+                    renderRounds(); 
+                    saveBtn.innerHTML = '✅ YERELE KAYDEDİLDİ'; 
+                } else { 
+                    saveBtn.innerHTML = '✅ KAYDEDİLDİ'; 
+                }
+            } catch (e) {
+                console.error("Kayıt hatası:", e);
+                loadLocalFallback();
+            } finally {
+                setTimeout(() => { 
+                    saveBtn.innerHTML = originalHtml; 
+                    saveBtn.disabled = false; 
+                }, 2000);
+            }
+        });
+
+        // Sıfırlama Onay Modalı Yönetimi
+        resetModalBtn.addEventListener('click', () => {
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmModal.querySelector('div').classList.remove('scale-90');
+                confirmModal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        });
+        
+        function hideResetModal() {
+            confirmModal.classList.add('opacity-0');
+            confirmModal.querySelector('div').classList.remove('scale-100');
+            confirmModal.querySelector('div').classList.add('scale-90');
+            setTimeout(() => {
+                confirmModal.classList.add('hidden');
+            }, 300);
+        }
+
+        cancelResetBtn.addEventListener('click', hideResetModal);
+
+        confirmResetBtn.addEventListener('click', async () => {
+            hideResetModal();
+            const originalHTML = resetModalBtn.innerHTML;
+            resetModalBtn.innerHTML = '⏳ SIFIRLANIYOR...';
+            resetModalBtn.disabled = true;
+
+            const activeTourney = getActiveTournament();
+            if (activeTourney) {
+                activeTourney.rounds = [];
+            }
+
+            try {
+                if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                backupDataLocally(tournamentData);
+                resetModalBtn.innerHTML = '✅ SIFIRLANDI';
+                renderLeaderboard();
+                renderRounds();
+                updateButtonStates();
+            } catch(e) {
+                console.error("Sıfırlama hatası:", e);
+                loadLocalFallback();
+            } finally {
+                setTimeout(() => { resetModalBtn.innerHTML = originalHTML; resetModalBtn.disabled = false; }, 2000);
+            }
+        });
+
+        // Bağlantı Bildirimleri
+        window.addEventListener('offline', () => { showWarning("İnternet bağlantısı koptu. Çevrimdışı modda devam ediyorsunuz."); loadLocalFallback(); });
+        window.addEventListener('online', () => { showWarning("İnternet geldi! Canlı sisteme yeniden bağlanılıyor..."); initAuth(); });
+
+
+        // ==========================================
+        // AYARLAR VE YÖNETİM PANELİ JAVASCRIPT DETAYLARI
+        // ==========================================
+        
+        // Settings Modal Açar / Kapatır
+        openSettingsBtn.addEventListener('click', openSettingsModal);
+        closeSettingsBtn.addEventListener('click', closeSettingsModal);
+        
+        function openSettingsModal() {
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                settingsModal.classList.remove('opacity-0');
+                settingsModal.querySelector('div').classList.remove('scale-90');
+                settingsModal.querySelector('div').classList.add('scale-100');
+            }, 10);
+            
+            showTab('players');
+            loadSettingsInputs();
+        }
+        
+        function closeSettingsModal() {
+            settingsModal.classList.add('opacity-0');
+            settingsModal.querySelector('div').classList.remove('scale-100');
+            settingsModal.querySelector('div').classList.add('scale-90');
+            setTimeout(() => {
+                settingsModal.classList.add('hidden');
+            }, 300);
+        }
+        
+        // Tab Değiştirme Fonksiyonu
+        function showTab(tabName) {
+            tabPlayersBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-slate-200";
+            tabTourneysBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-slate-200";
+            tabDetailsBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition text-slate-400 hover:text-slate-200";
+            
+            tabPlayersContent.classList.add('hidden');
+            tabTourneysContent.classList.add('hidden');
+            tabDetailsContent.classList.add('hidden');
+            
+            if (tabName === 'players') {
+                tabPlayersBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+                tabPlayersContent.classList.remove('hidden');
+                renderPlayersPool();
+            } else if (tabName === 'tourneys') {
+                tabTourneysBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+                tabTourneysContent.classList.remove('hidden');
+                renderTourneysList();
+            } else if (tabName === 'details') {
+                tabDetailsBtn.className = "flex-1 py-2 px-3 rounded-lg text-xs font-bold transition bg-indigo-600 text-white shadow-md";
+                tabDetailsContent.classList.remove('hidden');
+            }
+        }
+        
+        tabPlayersBtn.addEventListener('click', () => showTab('players'));
+        tabTourneysBtn.addEventListener('click', () => showTab('tourneys'));
+        tabDetailsBtn.addEventListener('click', () => showTab('details'));
+        
+        // Settings Girdilerini Yükleme
+        function loadSettingsInputs() {
+            const activeTourney = getActiveTournament();
+            if (activeTourney) {
+                editTourneyName.value = activeTourney.name || "";
+                editTourneyCourt.value = activeTourney.court || "";
+                editTourneyTime.value = activeTourney.time || "";
+            }
+        }
+        
+        // Dinamik Kadro/Oyuncu Listesini Çizme
+        function renderPlayersPool() {
+            if (!tournamentData) return;
+            const activeTourney = getActiveTournament();
+            if (!activeTourney) return;
+            
+            playersPoolList.innerHTML = '';
+            
+            tournamentData.playersPool.forEach(player => {
+                const isActive = activeTourney.activePlayerIds.includes(player.id);
+                
+                const item = document.createElement('div');
+                item.className = "flex items-center gap-3 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80 hover:border-slate-700/40 transition-all";
+                item.innerHTML = `
+                    <input type="checkbox" data-id="${player.id}" ${isActive ? 'checked' : ''} class="player-active-checkbox w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-750 shrink-0">
+                    <input type="text" data-id="${player.id}" value="${player.name}" class="player-name-input bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none text-sm font-semibold text-slate-100 w-full px-1 py-0.5 rounded transition">
+                    <button data-id="${player.id}" class="delete-player-btn text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg transition shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                `;
+                playersPoolList.appendChild(item);
+            });
+            
+            // Seçili aktif sayısını güncelle
+            activeCountBadge.textContent = `Seçili: ${activeTourney.activePlayerIds.length} / 8`;
+            if (activeTourney.activePlayerIds.length === 8) {
+                activeCountBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold";
+            } else {
+                activeCountBadge.className = "bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
+            }
+            
+            // Havuzdaki isim değişikliklerini yakala
+            document.querySelectorAll('.player-name-input').forEach(input => {
+                input.addEventListener('change', function() {
+                    const id = this.getAttribute('data-id');
+                    const newName = this.value.trim();
+                    if (newName) {
+                        const p = tournamentData.playersPool.find(poolP => poolP.id === id);
+                        if (p) p.name = newName;
+                    }
+                });
+            });
+            
+            // Aktif kadroya ekleme / çıkarma
+            document.querySelectorAll('.player-active-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const id = this.getAttribute('data-id');
+                    const isChecked = this.checked;
+                    
+                    if (isChecked) {
+                        if (activeTourney.activePlayerIds.length >= 8) {
+                            this.checked = false;
+                            showWarning("Bir turnuvada en fazla 8 aktif oyuncu eşleştirilebilir!");
+                            return;
+                        }
+                        if (!activeTourney.activePlayerIds.includes(id)) {
+                            activeTourney.activePlayerIds.push(id);
+                        }
+                    } else {
+                        activeTourney.activePlayerIds = activeTourney.activePlayerIds.filter(activeId => activeId !== id);
+                    }
+                    
+                    // Aktif sayısını yeniden çiz
+                    activeCountBadge.textContent = `Seçili: ${activeTourney.activePlayerIds.length} / 8`;
+                    if (activeTourney.activePlayerIds.length === 8) {
+                        activeCountBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold";
+                    } else {
+                        activeCountBadge.className = "bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
+                    }
+                });
+            });
+            
+            // Havuzdan ve kadrodan oyuncuyu silme
+            document.querySelectorAll('.delete-player-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    
+                    // Havuzdan sil
+                    tournamentData.playersPool = tournamentData.playersPool.filter(p => p.id !== id);
+                    
+                    // Tüm turnuvaların aktif kadrolarından sil
+                    tournamentData.tournaments.forEach(tourney => {
+                        tourney.activePlayerIds = tourney.activePlayerIds.filter(activeId => activeId !== id);
+                    });
+                    
+                    renderPlayersPool();
+                });
+            });
+        }
+        
+        // Yeni Oyuncu Ekleme Butonu
+        addPlayerBtn.addEventListener('click', () => {
+            const name = newPlayerNameInput.value.trim();
+            if (!name) return;
+            
+            const newId = `p_${Date.now()}`;
+            tournamentData.playersPool.push({
+                id: newId,
+                name: name
+            });
+            
+            // Otomatik olarak aktif tura da ekle (eğer 8'den az seçiliyse)
+            const activeTourney = getActiveTournament();
+            if (activeTourney && activeTourney.activePlayerIds.length < 8) {
+                activeTourney.activePlayerIds.push(newId);
+            }
+            
+            newPlayerNameInput.value = '';
+            renderPlayersPool();
+        });
+        
+        newPlayerNameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') addPlayerBtn.click();
+        });
+        
+        // Dinamik Turnuvalar Listesini Çizme
+        function renderTourneysList() {
+            if (!tournamentData) return;
+            
+            tourneysList.innerHTML = '';
+            
+            tournamentData.tournaments.forEach(tourney => {
+                const isCurrent = tourney.id === tournamentData.currentTournamentId;
+                
+                const item = document.createElement('div');
+                item.className = `flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl border transition-all ${isCurrent ? 'bg-indigo-950/30 border-indigo-500/50 shadow-neon-indigo' : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700/40'}`;
+                
+                item.innerHTML = `
+                    <div class="space-y-1 mb-2.5 sm:mb-0">
+                        <div class="flex items-center gap-2">
+                            <span class="font-extrabold text-sm text-slate-100">${tourney.name || "İsimsiz"}</span>
+                            ${isCurrent ? '<span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">Aktif</span>' : ''}
+                        </div>
+                        <div class="text-xs text-slate-400 flex flex-wrap gap-x-3 gap-y-1">
+                            <span>📍 ${tourney.court || "Kort Belirtilmedi"}</span>
+                            <span>🕒 ${tourney.time || "Saat Belirtilmedi"}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 justify-end">
+                        ${!isCurrent ? `<button data-id="${tourney.id}" class="switch-tourney-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition">Seç</button>` : ''}
+                        ${tournamentData.tournaments.length > 1 ? `<button data-id="${tourney.id}" class="delete-tourney-btn text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-xl transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>` : ''}
+                    </div>
+                `;
+                tourneysList.appendChild(item);
+            });
+            
+            // Turnuva Seçme Butonu
+            document.querySelectorAll('.switch-tourney-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = this.getAttribute('data-id');
+                    tournamentData.currentTournamentId = id;
+                    
+                    // Arayüzü güncelle ve modalı kapat
+                    updateHeaderDisplay();
+                    renderLeaderboard();
+                    renderRounds();
+                    updateButtonStates();
+                    closeSettingsModal();
+                    
+                    // Kaydet
+                    try {
+                        if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                        backupDataLocally(tournamentData);
+                    } catch(e) { console.error(e); }
+                });
+            });
+            
+            // Turnuva Silme Butonu
+            document.querySelectorAll('.delete-tourney-btn').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const id = this.getAttribute('data-id');
+                    if (confirm("Bu turnuvayı silmek istediğinize emin misiniz? (Tüm maç geçmişi silinir)")) {
+                        // Eğer silinen turnuva aktif olansa, başka birini aktif yap
+                        if (tournamentData.currentTournamentId === id) {
+                            const other = tournamentData.tournaments.find(t => t.id !== id);
+                            tournamentData.currentTournamentId = other.id;
+                        }
+                        
+                        tournamentData.tournaments = tournamentData.tournaments.filter(t => t.id !== id);
+                        renderTourneysList();
+                        updateHeaderDisplay();
+                        renderLeaderboard();
+                        renderRounds();
+                        updateButtonStates();
+                    }
+                });
+            });
+        }
+        
+        // Yeni Turnuva Oluşturma Butonu
+        createTourneyBtn.addEventListener('click', async () => {
+            const newId = `t_${Date.now()}`;
+            const activeIds = tournamentData.playersPool.slice(0, 8).map(p => p.id);
+            
+            tournamentData.tournaments.push({
+                id: newId,
+                name: `Turnuva #${tournamentData.tournaments.length + 1}`,
+                court: "Kort 1 & 2",
+                time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
+                activePlayerIds: activeIds,
+                rounds: []
+            });
+            
+            // Yeni tura otomatik geçiş yap
+            tournamentData.currentTournamentId = newId;
+            
+            renderTourneysList();
+            loadSettingsInputs();
+            updateHeaderDisplay();
+            renderLeaderboard();
+            renderRounds();
+            updateButtonStates();
+            
+            showTab('details'); // Oluşturunca doğrudan detay düzenleme sekmesine at
+        });
+        
+        // Ayarları Kaydetme ve Modalı Kapatma
+        saveSettingsBtn.addEventListener('click', async () => {
+            const activeTourney = getActiveTournament();
+            if (!activeTourney) return;
+            
+            // Kadro Kontrolü (Tam 8 Oyuncu Olmalı)
+            if (activeTourney.activePlayerIds.length !== 8) {
+                showWarning(`Turnuva aktif kadrosunda tam 8 oyuncu seçili olmalıdır! (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
+                showTab('players');
+                return;
+            }
+            
+            // Detay formundaki değerleri veriye yansıt
+            activeTourney.name = editTourneyName.value.trim() || "İsimsiz Turnuva";
+            activeTourney.court = editTourneyCourt.value.trim() || "Kort Belirtilmedi";
+            activeTourney.time = editTourneyTime.value.trim() || "Saat Belirtilmedi";
+            
+            const originalText = saveSettingsBtn.innerHTML;
+            saveSettingsBtn.innerHTML = '⏳ Kaydediliyor...';
+            saveSettingsBtn.disabled = true;
+            
+            try {
+                if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                backupDataLocally(tournamentData);
+                
+                // Arayüzleri Tazele
+                updateHeaderDisplay();
+                renderLeaderboard();
+                renderRounds();
+                updateButtonStates();
+                
+                saveSettingsBtn.innerHTML = '✅ Başarıyla Kaydedildi';
+                setTimeout(() => {
+                    closeSettingsModal();
+                    saveSettingsBtn.innerHTML = originalText;
+                    saveSettingsBtn.disabled = false;
+                }, 1000);
+                
+            } catch(e) {
+                console.error("Kayıt hatası:", e);
+                loadLocalFallback();
+                closeSettingsModal();
+                saveSettingsBtn.innerHTML = originalText;
+                saveSettingsBtn.disabled = false;
+            }
+        });
+
+        initAuth();
+    </script>
+</body>
+</html>
