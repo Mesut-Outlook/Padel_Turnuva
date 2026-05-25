@@ -204,8 +204,15 @@
                 </button>
             </div>
 
-            <div class="pt-6">
-                <button id="resetModalBtn" class="w-full bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 font-bold py-3 px-6 rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 text-sm border border-rose-900/30">
+            <div class="pt-6 flex flex-col sm:flex-row gap-4">
+                <button id="deleteLastRoundBtn" class="flex-1 bg-amber-950/20 hover:bg-amber-950/40 text-amber-400 hover:text-amber-300 font-bold py-3.5 px-6 rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 text-sm border border-amber-900/30 hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>SON TURU GERİ AL / SİL</span>
+                </button>
+
+                <button id="resetModalBtn" class="flex-1 bg-rose-950/20 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 font-bold py-3.5 px-6 rounded-2xl transition-all duration-300 flex justify-center items-center gap-2 text-sm border border-rose-900/30">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
                     </svg>
@@ -306,8 +313,8 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-center text-white mb-2 font-display">Sıfırlansın mı?</h3>
-            <p class="text-slate-400 text-center text-sm mb-6 leading-relaxed">Aktif turnuvanın tüm maç skorları silinecek ve puanlar sıfırlanacaktır. Bu işlem geri alınamaz.</p>
+            <h3 id="confirmModalTitle" class="text-2xl font-bold text-center text-white mb-2 font-display">Sıfırlansın mı?</h3>
+            <p id="confirmModalDesc" class="text-slate-400 text-center text-sm mb-6 leading-relaxed">Aktif turnuvanın tüm maç skorları silinecek ve puanlar sıfırlanacaktır. Bu işlem geri alınamaz.</p>
             <div class="flex gap-3">
                 <button id="cancelResetBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 font-bold py-3.5 rounded-xl transition border border-slate-700/50">İptal</button>
                 <button id="confirmResetBtn" class="flex-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-rose-950/20">Evet, Sıfırla</button>
@@ -356,6 +363,7 @@
         const warningToastMsg = document.getElementById('warningToastMsg');
         
         const resetModalBtn = document.getElementById('resetModalBtn');
+        const deleteLastRoundBtn = document.getElementById('deleteLastRoundBtn');
         const confirmModal = document.getElementById('confirmModal');
         const cancelResetBtn = document.getElementById('cancelResetBtn');
         const confirmResetBtn = document.getElementById('confirmResetBtn');
@@ -506,21 +514,25 @@
 
         function updateButtonStates() {
             const activeTourney = getActiveTournament();
-            if (activeTourney && activeTourney.rounds && activeTourney.rounds.length > 0) {
+            const roundCount = activeTourney && activeTourney.rounds ? activeTourney.rounds.length : 0;
+            
+            if (roundCount > 0) {
                 saveBtn.classList.remove('hidden');
+                if (deleteLastRoundBtn) deleteLastRoundBtn.classList.remove('hidden');
                 newRoundBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>SONRAKİ TURU OLUŞTUR</span>
+                    <span>YENİ TUR OLUŞTUR (${roundCount + 1}. TUR)</span>
                 `;
             } else {
                 saveBtn.classList.add('hidden');
+                if (deleteLastRoundBtn) deleteLastRoundBtn.classList.add('hidden');
                 newRoundBtn.innerHTML = `
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                     </svg>
-                    <span>1. TURU OLUŞTUR (RASTGELE)</span>
+                    <span>YENİ TUR OLUŞTUR (1. TUR)</span>
                 `;
             }
         }
@@ -869,7 +881,6 @@
                 }
             }
 
-            const originalBtnContent = newRoundBtn.innerHTML;
             newRoundBtn.innerHTML = '⏳ OLUŞTURULUYOR...';
             newRoundBtn.disabled = true;
 
@@ -984,7 +995,7 @@
                 loadLocalFallback();
             } finally {
                 newRoundBtn.disabled = false;
-                newRoundBtn.innerHTML = originalBtnContent;
+                updateButtonStates();
             }
         });
 
@@ -1053,8 +1064,32 @@
             }
         });
 
+        let confirmActionType = "reset"; // "reset" veya "deleteLastRound"
+
         // Sıfırlama Onay Modalı Yönetimi
         resetModalBtn.addEventListener('click', () => {
+            confirmActionType = "reset";
+            document.getElementById('confirmModalTitle').textContent = "Sıfırlansın mı?";
+            document.getElementById('confirmModalDesc').textContent = "Aktif turnuvanın tüm maç skorları silinecek ve puanlar sıfırlanacaktır. Bu işlem geri alınamaz.";
+            confirmResetBtn.textContent = "Evet, Sıfırla";
+            confirmResetBtn.className = "flex-1 bg-rose-600 hover:bg-rose-500 active:bg-rose-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-rose-950/20";
+            
+            confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                confirmModal.classList.remove('opacity-0');
+                confirmModal.querySelector('div').classList.remove('scale-90');
+                confirmModal.querySelector('div').classList.add('scale-100');
+            }, 10);
+        });
+
+        // Son Turu Silme Onay Modalı Yönetimi
+        deleteLastRoundBtn.addEventListener('click', () => {
+            confirmActionType = "deleteLastRound";
+            document.getElementById('confirmModalTitle').textContent = "Son Tur Silinsin mi?";
+            document.getElementById('confirmModalDesc').textContent = "En son oluşturulan tur tamamen silinecektir. Eğer bir önceki tur üzerinde düzeltme yapacaksanız, son turu silip düzeltmeyi kaydettikten sonra yeni turu tekrar oluşturabilirsiniz. Bu işlem geri alınamaz.";
+            confirmResetBtn.textContent = "Evet, Son Turu Sil";
+            confirmResetBtn.className = "flex-1 bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-amber-950/20";
+            
             confirmModal.classList.remove('hidden');
             setTimeout(() => {
                 confirmModal.classList.remove('opacity-0');
@@ -1076,27 +1111,51 @@
 
         confirmResetBtn.addEventListener('click', async () => {
             hideResetModal();
-            const originalHTML = resetModalBtn.innerHTML;
-            resetModalBtn.innerHTML = '⏳ SIFIRLANIYOR...';
-            resetModalBtn.disabled = true;
-
             const activeTourney = getActiveTournament();
-            if (activeTourney) {
-                activeTourney.rounds = [];
-            }
+            if (!activeTourney) return;
 
-            try {
-                if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
-                backupDataLocally(tournamentData);
-                resetModalBtn.innerHTML = '✅ SIFIRLANDI';
-                renderLeaderboard();
-                renderRounds();
-                updateButtonStates();
-            } catch(e) {
-                console.error("Sıfırlama hatası:", e);
-                loadLocalFallback();
-            } finally {
-                setTimeout(() => { resetModalBtn.innerHTML = originalHTML; resetModalBtn.disabled = false; }, 2000);
+            if (confirmActionType === "reset") {
+                const originalHTML = resetModalBtn.innerHTML;
+                resetModalBtn.innerHTML = '⏳ SIFIRLANIYOR...';
+                resetModalBtn.disabled = true;
+
+                activeTourney.rounds = [];
+
+                try {
+                    if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                    backupDataLocally(tournamentData);
+                    resetModalBtn.innerHTML = '✅ SIFIRLANDI';
+                    renderLeaderboard();
+                    renderRounds();
+                    updateButtonStates();
+                } catch(e) {
+                    console.error("Sıfırlama hatası:", e);
+                    loadLocalFallback();
+                } finally {
+                    setTimeout(() => { resetModalBtn.innerHTML = originalHTML; resetModalBtn.disabled = false; }, 2000);
+                }
+            } else if (confirmActionType === "deleteLastRound") {
+                const originalHTML = deleteLastRoundBtn.innerHTML;
+                deleteLastRoundBtn.innerHTML = '⏳ SİLİNİYOR...';
+                deleteLastRoundBtn.disabled = true;
+
+                if (activeTourney.rounds && activeTourney.rounds.length > 0) {
+                    activeTourney.rounds.pop();
+                }
+
+                try {
+                    if(!isOfflineMode && tourneyDocRef) await setDoc(tourneyDocRef, tournamentData);
+                    backupDataLocally(tournamentData);
+                    deleteLastRoundBtn.innerHTML = '✅ SİLİNDİ';
+                    renderLeaderboard();
+                    renderRounds();
+                    updateButtonStates();
+                } catch(e) {
+                    console.error("Tur silme hatası:", e);
+                    loadLocalFallback();
+                } finally {
+                    setTimeout(() => { deleteLastRoundBtn.innerHTML = originalHTML; deleteLastRoundBtn.disabled = false; }, 2000);
+                }
             }
         });
 
@@ -1181,7 +1240,18 @@
             
             playersPoolList.innerHTML = '';
             
-            tournamentData.playersPool.forEach(player => {
+            // Oyuncuları sırala: Seçili (aktif) olanlar üstte, kendi aralarında alfabetik (A-Z)
+            const sortedPool = [...tournamentData.playersPool].sort((a, b) => {
+                const aActive = activeTourney.activePlayerIds.includes(a.id);
+                const bActive = activeTourney.activePlayerIds.includes(b.id);
+                
+                if (aActive && !bActive) return -1;
+                if (!aActive && bActive) return 1;
+                
+                return a.name.localeCompare(b.name, 'tr', { sensitivity: 'base' });
+            });
+            
+            sortedPool.forEach(player => {
                 const isActive = activeTourney.activePlayerIds.includes(player.id);
                 
                 const item = document.createElement('div');
@@ -1190,7 +1260,7 @@
                     <input type="checkbox" data-id="${player.id}" ${isActive ? 'checked' : ''} class="player-active-checkbox w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500 bg-slate-900 border-slate-750 shrink-0">
                     <input type="text" data-id="${player.id}" value="${player.name}" class="player-name-input bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none text-sm font-semibold text-slate-100 w-full px-1 py-0.5 rounded transition">
                     <button data-id="${player.id}" class="delete-player-btn text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-lg transition shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                     </button>
@@ -1322,7 +1392,7 @@
                     <div class="flex gap-2 justify-end">
                         ${!isCurrent ? `<button data-id="${tourney.id}" class="switch-tourney-btn bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 px-3 rounded-xl text-xs transition">Seç</button>` : ''}
                         ${tournamentData.tournaments.length > 1 ? `<button data-id="${tourney.id}" class="delete-tourney-btn text-rose-500 hover:text-rose-400 hover:bg-rose-500/10 p-1.5 rounded-xl transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                             </svg>
                         </button>` : ''}
