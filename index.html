@@ -116,6 +116,7 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-1">
                         <span id="active-tourney-court" class="flex items-center gap-1">📍 Kort 1 & 2</span>
+                        <span id="active-tourney-court-count" class="flex items-center gap-1">🏟️ 2 Saha</span>
                         <span id="active-tourney-time" class="flex items-center gap-1">🕒 Belirtilmedi</span>
                     </div>
                 </div>
@@ -278,6 +279,10 @@
                         <input type="text" id="editTourneyCourt" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
                     </div>
                     <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">🎾 Saha Sayısı (Kort Sayısı)</label>
+                        <input type="number" id="editTourneyCourtCount" min="1" max="10" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
+                    </div>
+                    <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400">🕒 Turnuva Zamanı / Saati</label>
                         <input type="text" id="editTourneyTime" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
                     </div>
@@ -379,6 +384,7 @@
         
         const editTourneyName = document.getElementById('editTourneyName');
         const editTourneyCourt = document.getElementById('editTourneyCourt');
+        const editTourneyCourtCount = document.getElementById('editTourneyCourtCount');
         const editTourneyTime = document.getElementById('editTourneyTime');
 
         const activeTourneyNameDisp = document.getElementById('active-tourney-name');
@@ -417,6 +423,7 @@
                             id: "default-tourney",
                             name: "Ana Turnuva",
                             court: "Kort 1 & 2",
+                            courtCount: 2,
                             time: "Belirtilmedi",
                             activePlayerIds: activeIds,
                             rounds: oldData.rounds || []
@@ -427,6 +434,11 @@
             }
             
             if (oldData && oldData.tournaments && oldData.playersPool) {
+                oldData.tournaments.forEach(t => {
+                    if (t.courtCount === undefined) {
+                        t.courtCount = 2;
+                    }
+                });
                 return oldData;
             }
 
@@ -438,6 +450,7 @@
                         id: "t1",
                         name: "Mexicano Turnuvası 1",
                         court: "Kort 1 & 2",
+                        courtCount: 2,
                         time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
                         activePlayerIds: initialPlayers.map(p => p.id),
                         rounds: []
@@ -555,7 +568,13 @@
             const activeTourney = getActiveTournament();
             if (activeTourney) {
                 activeTourneyNameDisp.textContent = activeTourney.name || "İsimsiz Turnuva";
-                activeTourneyCourtDisp.innerHTML = `🏟️ ${activeTourney.court || "Kort Belirtilmedi"}`;
+                activeTourneyCourtDisp.innerHTML = `📍 ${activeTourney.court || "Kort Belirtilmedi"}`;
+                
+                const activeTourneyCourtCountDisp = document.getElementById('active-tourney-court-count');
+                if (activeTourneyCourtCountDisp) {
+                    activeTourneyCourtCountDisp.innerHTML = `🏟️ ${activeTourney.courtCount || 2} Saha`;
+                }
+                
                 activeTourneyTimeDisp.innerHTML = `🕒 ${activeTourney.time || "Saat Belirtilmedi"}`;
             }
         }
@@ -694,6 +713,19 @@
                 const roundDiv = document.createElement('div');
                 roundDiv.className = 'border-l-4 border-indigo-500 bg-slate-900/30 p-4 md:p-6 rounded-r-2xl shadow-lg border-t border-r border-b border-slate-800/80 backdrop-blur-sm transition-all duration-300 hover:border-slate-700/80';
                 
+                // Bu turda oynamayan (bay geçen) aktif oyuncuları bulalım
+                const playingPlayerIds = new Set();
+                round.matches.forEach(match => {
+                    playingPlayerIds.add(match.t1p1.id);
+                    playingPlayerIds.add(match.t1p2.id);
+                    playingPlayerIds.add(match.t2p1.id);
+                    playingPlayerIds.add(match.t2p2.id);
+                });
+                
+                const roundWaitingPlayers = activeTourney.activePlayerIds
+                    .filter(id => !playingPlayerIds.has(id))
+                    .map(id => tournamentData.playersPool.find(p => p.id === id)?.name || "Silinmiş Oyuncu");
+
                 let roundHtml = `
                 <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
                     <h2 class="text-xl font-bold font-display text-indigo-400 flex items-center gap-2">
@@ -702,6 +734,14 @@
                     </h2>
                     <span class="text-xs text-indigo-300/60 font-semibold tracking-wide">Dinamik Eşleştirme</span>
                 </div>`;
+
+                if (roundWaitingPlayers.length > 0) {
+                    roundHtml += `
+                    <div class="bg-indigo-950/40 border border-indigo-500/20 text-indigo-300/90 text-xs px-4 py-2.5 rounded-xl mb-4 flex flex-wrap items-center gap-2">
+                        <span class="font-bold shrink-0">⏳ Bekleyen Oyuncular:</span>
+                        <span class="font-semibold tracking-wide">${roundWaitingPlayers.join(", ")}</span>
+                    </div>`;
+                }
 
                 round.matches.forEach((match, matchIndex) => {
                     const idPrefix = `r${roundIndex}_m${matchIndex}`;
@@ -797,8 +837,8 @@
             if (!activeTourney) return;
 
             // KADRO DOĞRULAMASI
-            if (activeTourney.activePlayerIds.length !== 8) {
-                showWarning(`Turnuvaya başlamak için tam olarak 8 aktif oyuncu seçmelisiniz. (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
+            if (activeTourney.activePlayerIds.length < 4) {
+                showWarning(`Turnuvaya başlamak için en az 4 aktif oyuncu seçmelisiniz. (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
                 openSettingsModal();
                 showTab('players');
                 return;
@@ -833,13 +873,32 @@
             newRoundBtn.innerHTML = '⏳ OLUŞTURULUYOR...';
             newRoundBtn.disabled = true;
 
-            // Sıralamaya göre oyuncu listesini havuzdan eşleştirip al
-            let tempPlayers = activeTourney.activePlayerIds.map(id => {
+            // Her oyuncunun oynadığı maç sayısını hesaplayalım (dinamik olarak)
+            const playCounts = {};
+            activeTourney.activePlayerIds.forEach(id => {
+                playCounts[id] = 0;
+            });
+            
+            if (activeTourney.rounds) {
+                activeTourney.rounds.forEach(round => {
+                    round.matches.forEach(match => {
+                        [match.t1p1.id, match.t1p2.id, match.t2p1.id, match.t2p2.id].forEach(id => {
+                            if (id in playCounts) {
+                                playCounts[id]++;
+                            }
+                        });
+                    });
+                });
+            }
+
+            // Tüm aktif oyuncuları nesne halinde eşleştirip hazırlayalım
+            let allActivePlayers = activeTourney.activePlayerIds.map(id => {
                 const poolP = tournamentData.playersPool.find(p => p.id === id);
                 return {
                     id: id,
                     name: poolP ? poolP.name : "Silinmiş Oyuncu",
-                    score: 0
+                    score: 0,
+                    playCount: playCounts[id] || 0
                 };
             });
 
@@ -852,12 +911,14 @@
                         if (!isNaN(s1) && !isNaN(s2)) {
                             let pts1 = s1 >= 24 ? s1 + 5 : s1;
                             let pts2 = s2 >= 24 ? s2 + 5 : s2;
-                            let p1a = tempPlayers.find(p => p.id === match.t1p1.id);
-                            let p1b = tempPlayers.find(p => p.id === match.t1p2.id);
+                            
+                            let p1a = allActivePlayers.find(p => p.id === match.t1p1.id);
+                            let p1b = allActivePlayers.find(p => p.id === match.t1p2.id);
                             if(p1a) p1a.score += pts1;
                             if(p1b) p1b.score += pts1;
-                            let p2a = tempPlayers.find(p => p.id === match.t2p1.id);
-                            let p2b = tempPlayers.find(p => p.id === match.t2p2.id);
+                            
+                            let p2a = allActivePlayers.find(p => p.id === match.t2p1.id);
+                            let p2b = allActivePlayers.find(p => p.id === match.t2p2.id);
                             if(p2a) p2a.score += pts2;
                             if(p2b) p2b.score += pts2;
                         }
@@ -865,24 +926,49 @@
                 });
             }
 
-            // Sıralamaya göre azalan şekilde sırala
-            tempPlayers.sort((a, b) => b.score - a.score);
+            // Adil seçim için önce listeyi rastgele karıştıralım
+            for (let i = allActivePlayers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allActivePlayers[i], allActivePlayers[j]] = [allActivePlayers[j], allActivePlayers[i]];
+            }
 
-            let playersList = [...tempPlayers];
-            let newMatches = [];
-
-            if (!activeTourney.rounds || activeTourney.rounds.length === 0) {
-                // RASTGELE 1. TUR
-                for (let i = playersList.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [playersList[i], playersList[j]] = [playersList[j], playersList[i]];
+            // Sıralayalım:
+            // 1. playCount (küçük olan öncelikli)
+            // 2. score (büyük olan öncelikli)
+            allActivePlayers.sort((a, b) => {
+                if (a.playCount !== b.playCount) {
+                    return a.playCount - b.playCount;
                 }
-                newMatches.push({ t1p1: playersList[0], t1p2: playersList[1], t2p1: playersList[2], t2p2: playersList[3], score1: null, score2: null });
-                newMatches.push({ t1p1: playersList[4], t1p2: playersList[5], t2p1: playersList[6], t2p2: playersList[7], score1: null, score2: null });
-            } else {
-                // MEXICANO EŞLEŞTİRME ALGORİTMASI
-                newMatches.push({ t1p1: playersList[0], t1p2: playersList[7], t2p1: playersList[3], t2p2: playersList[4], score1: null, score2: null });
-                newMatches.push({ t1p1: playersList[1], t1p2: playersList[6], t2p1: playersList[2], t2p2: playersList[5], score1: null, score2: null });
+                return b.score - a.score;
+            });
+
+            // Saha ve Maç Sayısı Hesabı
+            const courtCount = parseInt(activeTourney.courtCount) || 2;
+            const N = activeTourney.activePlayerIds.length;
+            const maxMatches = Math.min(courtCount, Math.floor(N / 4));
+            const playersNeeded = maxMatches * 4;
+            
+            // Oynayacak olanları seçelim:
+            const selectedPlayers = allActivePlayers.slice(0, playersNeeded);
+            
+            // Oynayacak oyuncuları kendi içlerinde skorlarına göre azalan sırada sıralayalım
+            selectedPlayers.sort((a, b) => b.score - a.score);
+
+            let newMatches = [];
+            for (let k = 0; k < maxMatches; k++) {
+                const p0 = selectedPlayers[4 * k];
+                const p1 = selectedPlayers[4 * k + 1];
+                const p2 = selectedPlayers[4 * k + 2];
+                const p3 = selectedPlayers[4 * k + 3];
+                
+                newMatches.push({
+                    t1p1: { id: p0.id, name: p0.name },
+                    t1p2: { id: p3.id, name: p3.name },
+                    t2p1: { id: p1.id, name: p1.name },
+                    t2p2: { id: p2.id, name: p2.name },
+                    score1: null,
+                    score2: null
+                });
             }
 
             const newRoundsArray = activeTourney.rounds ? [...activeTourney.rounds] : [];
@@ -1082,6 +1168,7 @@
             if (activeTourney) {
                 editTourneyName.value = activeTourney.name || "";
                 editTourneyCourt.value = activeTourney.court || "";
+                editTourneyCourtCount.value = activeTourney.courtCount || 2;
                 editTourneyTime.value = activeTourney.time || "";
             }
         }
@@ -1112,8 +1199,13 @@
             });
             
             // Seçili aktif sayısını güncelle
-            activeCountBadge.textContent = `Seçili: ${activeTourney.activePlayerIds.length} / 8`;
-            if (activeTourney.activePlayerIds.length === 8) {
+            const activeCount = activeTourney.activePlayerIds.length;
+            const courtCount = parseInt(activeTourney.courtCount) || 2;
+            const filledCourts = Math.min(courtCount, Math.floor(activeCount / 4));
+            const waitingCount = activeCount - (filledCourts * 4);
+            
+            activeCountBadge.textContent = `Seçili: ${activeCount} Oyuncu (${filledCourts} Kort Dolu, ${waitingCount} Bekleyen)`;
+            if (activeCount >= 4) {
                 activeCountBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold";
             } else {
                 activeCountBadge.className = "bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
@@ -1138,11 +1230,6 @@
                     const isChecked = this.checked;
                     
                     if (isChecked) {
-                        if (activeTourney.activePlayerIds.length >= 8) {
-                            this.checked = false;
-                            showWarning("Bir turnuvada en fazla 8 aktif oyuncu eşleştirilebilir!");
-                            return;
-                        }
                         if (!activeTourney.activePlayerIds.includes(id)) {
                             activeTourney.activePlayerIds.push(id);
                         }
@@ -1151,8 +1238,13 @@
                     }
                     
                     // Aktif sayısını yeniden çiz
-                    activeCountBadge.textContent = `Seçili: ${activeTourney.activePlayerIds.length} / 8`;
-                    if (activeTourney.activePlayerIds.length === 8) {
+                    const activeCountInner = activeTourney.activePlayerIds.length;
+                    const courtCountInner = parseInt(activeTourney.courtCount) || 2;
+                    const filledCourtsInner = Math.min(courtCountInner, Math.floor(activeCountInner / 4));
+                    const waitingCountInner = activeCountInner - (filledCourtsInner * 4);
+                    
+                    activeCountBadge.textContent = `Seçili: ${activeCountInner} Oyuncu (${filledCourtsInner} Kort Dolu, ${waitingCountInner} Bekleyen)`;
+                    if (activeCountInner >= 4) {
                         activeCountBadge.className = "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full font-bold";
                     } else {
                         activeCountBadge.className = "bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full font-bold animate-pulse";
@@ -1189,9 +1281,9 @@
                 name: name
             });
             
-            // Otomatik olarak aktif tura da ekle (eğer 8'den az seçiliyse)
+            // Otomatik olarak aktif tura da ekle
             const activeTourney = getActiveTournament();
-            if (activeTourney && activeTourney.activePlayerIds.length < 8) {
+            if (activeTourney) {
                 activeTourney.activePlayerIds.push(newId);
             }
             
@@ -1285,12 +1377,13 @@
         // Yeni Turnuva Oluşturma Butonu
         createTourneyBtn.addEventListener('click', async () => {
             const newId = `t_${Date.now()}`;
-            const activeIds = tournamentData.playersPool.slice(0, 8).map(p => p.id);
+            const activeIds = tournamentData.playersPool.map(p => p.id);
             
             tournamentData.tournaments.push({
                 id: newId,
                 name: `Turnuva #${tournamentData.tournaments.length + 1}`,
                 court: "Kort 1 & 2",
+                courtCount: 2,
                 time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
                 activePlayerIds: activeIds,
                 rounds: []
@@ -1314,9 +1407,9 @@
             const activeTourney = getActiveTournament();
             if (!activeTourney) return;
             
-            // Kadro Kontrolü (Tam 8 Oyuncu Olmalı)
-            if (activeTourney.activePlayerIds.length !== 8) {
-                showWarning(`Turnuva aktif kadrosunda tam 8 oyuncu seçili olmalıdır! (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
+            // Kadro Kontrolü (En az 4 oyuncu olmalı)
+            if (activeTourney.activePlayerIds.length < 4) {
+                showWarning(`Turnuva aktif kadrosunda en az 4 oyuncu seçili olmalıdır! (Şu an seçili: ${activeTourney.activePlayerIds.length})`);
                 showTab('players');
                 return;
             }
@@ -1324,6 +1417,10 @@
             // Detay formundaki değerleri veriye yansıt
             activeTourney.name = editTourneyName.value.trim() || "İsimsiz Turnuva";
             activeTourney.court = editTourneyCourt.value.trim() || "Kort Belirtilmedi";
+            
+            const cc = parseInt(editTourneyCourtCount.value);
+            activeTourney.courtCount = isNaN(cc) || cc < 1 ? 2 : cc;
+            
             activeTourney.time = editTourneyTime.value.trim() || "Saat Belirtilmedi";
             
             const originalText = saveSettingsBtn.innerHTML;
