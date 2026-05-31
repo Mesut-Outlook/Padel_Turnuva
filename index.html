@@ -375,6 +375,10 @@
                         <input type="number" id="editTourneyCourtCount" min="1" max="10" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
                     </div>
                     <div class="space-y-1">
+                        <label class="text-xs font-bold text-slate-400">🏟️ Saha Numaraları / İsimleri (virgülle ayırın, örn: 3, 5)</label>
+                        <input type="text" id="editTourneyCourtNames" placeholder="Virgülle ayırın, örn: 3, 5" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
+                    </div>
+                    <div class="space-y-1">
                         <label class="text-xs font-bold text-slate-400">🕒 Turnuva Zamanı / Saati</label>
                         <input type="text" id="editTourneyTime" class="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-white rounded-xl px-3 py-2.5 text-sm font-semibold">
                     </div>
@@ -488,6 +492,7 @@
         const editTourneyName = document.getElementById('editTourneyName');
         const editTourneyCourt = document.getElementById('editTourneyCourt');
         const editTourneyCourtCount = document.getElementById('editTourneyCourtCount');
+        const editTourneyCourtNames = document.getElementById('editTourneyCourtNames');
         const editTourneyTime = document.getElementById('editTourneyTime');
         const editTourneyFinished = document.getElementById('editTourneyFinished');
         const easyReadingToggle = document.getElementById('easyReadingToggle');
@@ -557,6 +562,7 @@
                             name: "Ana Turnuva",
                             court: "Kort 1 & 2",
                             courtCount: 2,
+                            courtNames: [],
                             time: "Belirtilmedi",
                             activePlayerIds: activeIds,
                             rounds: oldData.rounds || [],
@@ -572,6 +578,9 @@
                 oldData.tournaments.forEach(t => {
                     if (t.courtCount === undefined) {
                         t.courtCount = 2;
+                    }
+                    if (t.courtNames === undefined) {
+                        t.courtNames = [];
                     }
                     if (t.isFinished === undefined) {
                         t.isFinished = false;
@@ -597,6 +606,7 @@
                         name: "Mexicano Turnuvası 1",
                         court: "Kort 1 & 2",
                         courtCount: 2,
+                        courtNames: [],
                         time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
                         activePlayerIds: initialPlayers.map(p => p.id),
                         rounds: [],
@@ -918,11 +928,12 @@
                     const t2p1Name = tournamentData.playersPool.find(p => p.id === match.t2p1.id)?.name || match.t2p1.name;
                     const t2p2Name = tournamentData.playersPool.find(p => p.id === match.t2p2.id)?.name || match.t2p2.name;
 
+                    const courtName = match.court || `Kort ${matchIndex + 1}`;
                     roundHtml += `
                     <div class="bg-slate-950/40 border border-slate-800/60 hover:border-slate-700/40 transition-all duration-300 rounded-2xl p-4 mb-4">
                         <div class="flex justify-between items-center text-xs font-bold text-slate-500 mb-3 uppercase tracking-widest border-b border-slate-900/60 pb-1.5">
-                            <span>🏟️ Kort ${matchIndex + 1}</span>
-                            <span class="text-indigo-400/80">Kort ${matchIndex + 1} Maçı</span>
+                            <span>🏟️ ${courtName}</span>
+                            <span class="text-indigo-400/80">${courtName} Maçı</span>
                         </div>
                         
                         <div class="space-y-3">
@@ -1116,6 +1127,7 @@
             // Oynayacak oyuncuları kendi içlerinde skorlarına göre azalan sırada sıralayalım
             selectedPlayers.sort((a, b) => b.score - a.score);
 
+            const definedCourts = activeTourney.courtNames || [];
             let newMatches = [];
             for (let k = 0; k < maxMatches; k++) {
                 const p0 = selectedPlayers[4 * k];
@@ -1123,13 +1135,22 @@
                 const p2 = selectedPlayers[4 * k + 2];
                 const p3 = selectedPlayers[4 * k + 3];
                 
+                let matchCourt = "";
+                if (definedCourts && definedCourts[k]) {
+                    const cName = definedCourts[k];
+                    matchCourt = /^\d+$/.test(cName) ? `Saha ${cName}` : cName;
+                } else {
+                    matchCourt = `Kort ${k + 1}`;
+                }
+                
                 newMatches.push({
                     t1p1: { id: p0.id, name: p0.name },
                     t1p2: { id: p3.id, name: p3.name },
                     t2p1: { id: p1.id, name: p1.name },
                     t2p2: { id: p2.id, name: p2.name },
                     score1: null,
-                    score2: null
+                    score2: null,
+                    court: matchCourt
                 });
             }
 
@@ -1175,12 +1196,13 @@
                         const s1 = parseInt(s1El.value);
                         const s2 = parseInt(s2El.value);
                         
+                        const mCourt = match.court || `Kort ${mIdx + 1}`;
                         if (s1 === 24 && s2 === 24) {
                             hasValidationError = true;
-                            showWarning(`${rIdx + 1}. Tur Kort ${mIdx + 1}: İki takım birden 24 alamaz!`);
+                            showWarning(`${rIdx + 1}. Tur ${mCourt}: İki takım birden 24 alamaz!`);
                         } else if (s1 < 24 && s2 < 24) {
                             hasValidationError = true;
-                            showWarning(`${rIdx + 1}. Tur Kort ${mIdx + 1}: Maç en az bir takım 24 puana ulaşınca biter!`);
+                            showWarning(`${rIdx + 1}. Tur ${mCourt}: Maç en az bir takım 24 puana ulaşınca biter!`);
                         }
                     }
                 });
@@ -1379,6 +1401,7 @@
                 editTourneyName.value = activeTourney.name || "";
                 editTourneyCourt.value = activeTourney.court || "";
                 editTourneyCourtCount.value = activeTourney.courtCount || 2;
+                editTourneyCourtNames.value = activeTourney.courtNames ? activeTourney.courtNames.join(", ") : "";
                 editTourneyTime.value = activeTourney.time || "";
                 editTourneyFinished.checked = !!activeTourney.isFinished;
             }
@@ -1644,6 +1667,7 @@
                 name: `Turnuva #${tournamentData.tournaments.length + 1}`,
                 court: "Kort 1 & 2",
                 courtCount: 2,
+                courtNames: [],
                 time: new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) + " - 18:00",
                 activePlayerIds: activeIds,
                 rounds: [],
@@ -1682,6 +1706,13 @@
             
             const cc = parseInt(editTourneyCourtCount.value);
             activeTourney.courtCount = isNaN(cc) || cc < 1 ? 2 : cc;
+            
+            const courtNamesStr = editTourneyCourtNames.value.trim();
+            if (courtNamesStr) {
+                activeTourney.courtNames = courtNamesStr.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            } else {
+                activeTourney.courtNames = [];
+            }
             
             activeTourney.time = editTourneyTime.value.trim() || "Saat Belirtilmedi";
             activeTourney.isFinished = editTourneyFinished.checked;
