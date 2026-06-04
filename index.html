@@ -1124,17 +1124,26 @@
             // Oynayacak olanları seçelim:
             const selectedPlayers = allActivePlayers.slice(0, playersNeeded);
             
-            // Oynayacak oyuncuları kendi içlerinde skorlarına göre azalan sırada sıralayalım
+            // Oynayacak oyuncuları skorlarına göre azalan sırada sıralayalım
             selectedPlayers.sort((a, b) => b.score - a.score);
 
+            // Mexicano Serpantın Eşleştirmesi:
+            // N oyuncu sıralanmış: [#1, #2, ..., #N]
+            // Saha k için:
+            //   Takım 1: #(k+1) + #(N-k)   → en iyi + en kötü (dengeli)
+            //   Takım 2: #(N/2-k) + #(N/2+1+k) → ortadaki oyuncular (dengeli)
+            // Örnek (8 oyuncu, 2 saha):
+            //   Saha 1: [#1 + #8] vs [#4 + #5]
+            //   Saha 2: [#2 + #7] vs [#3 + #6]
             const definedCourts = activeTourney.courtNames || [];
             let newMatches = [];
+            const N = selectedPlayers.length;
             for (let k = 0; k < maxMatches; k++) {
-                const p0 = selectedPlayers[4 * k];
-                const p1 = selectedPlayers[4 * k + 1];
-                const p2 = selectedPlayers[4 * k + 2];
-                const p3 = selectedPlayers[4 * k + 3];
-                
+                const a = selectedPlayers[k];               // k. en iyi
+                const b = selectedPlayers[N - 1 - k];      // k. en kötü
+                const c = selectedPlayers[N / 2 - 1 - k];  // orta alt
+                const d = selectedPlayers[N / 2 + k];      // orta üst
+
                 let matchCourt = "";
                 if (definedCourts && definedCourts[k]) {
                     const cName = definedCourts[k];
@@ -1142,12 +1151,12 @@
                 } else {
                     matchCourt = `Kort ${k + 1}`;
                 }
-                
+
                 newMatches.push({
-                    t1p1: { id: p0.id, name: p0.name },
-                    t1p2: { id: p3.id, name: p3.name },
-                    t2p1: { id: p1.id, name: p1.name },
-                    t2p2: { id: p2.id, name: p2.name },
+                    t1p1: { id: a.id, name: a.name },
+                    t1p2: { id: b.id, name: b.name },
+                    t2p1: { id: c.id, name: c.name },
+                    t2p2: { id: d.id, name: d.name },
                     score1: null,
                     score2: null,
                     court: matchCourt
