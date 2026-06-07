@@ -1117,8 +1117,8 @@
 
             // Saha ve Maç Sayısı Hesabı
             const courtCount = parseInt(activeTourney.courtCount) || 2;
-            const N = activeTourney.activePlayerIds.length;
-            const maxMatches = Math.min(courtCount, Math.floor(N / 4));
+            const totalPlayers = activeTourney.activePlayerIds.length;
+            const maxMatches = Math.min(courtCount, Math.floor(totalPlayers / 4));
             const playersNeeded = maxMatches * 4;
             
             // Oynayacak olanları seçelim:
