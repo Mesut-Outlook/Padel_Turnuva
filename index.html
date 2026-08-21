@@ -1127,22 +1127,26 @@
             // Oynayacak oyuncuları skorlarına göre azalan sırada sıralayalım
             selectedPlayers.sort((a, b) => b.score - a.score);
 
-            // Mexicano Serpantın Eşleştirmesi:
+            // Mexicano Eşleştirmesi (rakip = sıralamada en yakın takım):
             // N oyuncu sıralanmış: [#1, #2, ..., #N]
-            // Saha k için:
-            //   Takım 1: #(k+1) + #(N-k)   → en iyi + en kötü (dengeli)
-            //   Takım 2: #(N/2-k) + #(N/2+1+k) → ortadaki oyuncular (dengeli)
-            // Örnek (8 oyuncu, 2 saha):
-            //   Saha 1: [#1 + #8] vs [#4 + #5]
-            //   Saha 2: [#2 + #7] vs [#3 + #6]
+            // Önce takımlar kurulur: #1+#N, #2+#(N-1), #3+#(N-2), ...
+            // (her takımın sıra toplamı eşit → dengeli)
+            // Sonra ardışık iki takım aynı sahaya konur, böylece sıralamada
+            // yan yana olanlar birbiriyle oynar; üsttekini geçme şansı
+            // başka sahanın skoruna değil, kendi maçına bağlı olur.
+            // Örnek (12 oyuncu, 3 saha):
+            //   Saha 1: [#1 + #12] vs [#2 + #11]
+            //   Saha 2: [#3 + #10] vs [#4 + #9]
+            //   Saha 3: [#5 + #8]  vs [#6 + #7]
+            // Örnek (4 oyuncu, 1 saha): [#1 + #4] vs [#2 + #3]
             const definedCourts = activeTourney.courtNames || [];
             let newMatches = [];
             const N = selectedPlayers.length;
             for (let k = 0; k < maxMatches; k++) {
-                const a = selectedPlayers[k];               // k. en iyi
-                const b = selectedPlayers[N - 1 - k];      // k. en kötü
-                const c = selectedPlayers[N / 2 - 1 - k];  // orta alt
-                const d = selectedPlayers[N / 2 + k];      // orta üst
+                const a = selectedPlayers[2 * k];              // takım 1 üst
+                const b = selectedPlayers[N - 1 - 2 * k];      // takım 1 alt
+                const c = selectedPlayers[2 * k + 1];          // takım 2 üst
+                const d = selectedPlayers[N - 2 - 2 * k];      // takım 2 alt
 
                 let matchCourt = "";
                 if (definedCourts && definedCourts[k]) {
