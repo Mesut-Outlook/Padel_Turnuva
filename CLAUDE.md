@@ -48,7 +48,7 @@
 - **Bağımlılık yok:** npm/build tooling kullanılmaz; düz CSS, Firebase ESM CDN.
 - **Türkçe UI:** Kullanıcıya dönük tüm metinler Türkçe.
 - **Mobile-first:** Viewport `max-scale=1.0, user-scalable=0`, tüm değişiklikler mobilde test edilmeli.
-- **Firebase config:** `__firebase_config` ve `__app_id` runtime'da inject edilir; yoksa boş obje / default değerlerle offline modda çalışır.
+- **Firebase:** proje `padel-mexicano-turnuva`; config `index.html` içinde (runtime `__firebase_config` varsa o kullanılır). Kurallar sadece `artifacts/{appId}/public/data/mexicano/state` belgesini açar; anonim giriş isteğe bağlı.
 
 ## Kod Yapısı (index.html)
 

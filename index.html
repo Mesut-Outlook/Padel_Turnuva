@@ -185,11 +185,17 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // Web config'i gizli değildir; erişimi Firestore kuralları sınırlar (sadece turnuva belgesi açık)
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // Firebase Console → Proje ayarları → Web uygulaması → firebaseConfig (boşsa yerel modda çalışır)
+            apiKey: "AIzaSyA87E2yBWDFTYCcqgAlsd11BtwHhmFJsDA",
+            authDomain: "padel-mexicano-turnuva.firebaseapp.com",
+            projectId: "padel-mexicano-turnuva",
+            storageBucket: "padel-mexicano-turnuva.firebasestorage.app",
+            messagingSenderId: "639310274240",
+            appId: "1:639310274240:web:075a00c69755f680f75725"
         };
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -1215,12 +1221,17 @@
                 const db = getFirestore(app);
                 tourneyDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'mexicano', 'state');
 
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
+                // Giriş isteğe bağlı: kurallar oturum istemiyor, giriş açık değilse de dinlemeye devam et
+                try {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (e) {
+                    console.info("Anonim giriş kapalı, oturumsuz devam ediliyor.");
                 }
-                onAuthStateChanged(auth, user => { if (user) listenToTournament(); });
+                listenToTournament();
             } catch (error) {
                 console.warn("Bağlantı kurulamadı, yerel moda geçiliyor.", error);
                 goOffline();
