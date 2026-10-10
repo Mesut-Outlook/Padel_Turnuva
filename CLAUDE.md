@@ -38,14 +38,14 @@
 | Canlı sıralama tablosu | Firestore `onSnapshot` ile anlık |
 | Oyuncu eşleştirme | Dinamik, puana göre dengeli (Mexicano mantığı) |
 | Çok turnuva desteği | Aynı oyuncu havuzundan birden fazla turnuva |
-| Son turu geri al | Tur silinebilir (`deleteLastRoundBtn`) |
-| Büyük yazı modu | `localStorage` ile kalıcı, CSS `body.large-text` |
+| Son turu geri al | Tur silinebilir (onay diyaloğu ile) |
+| Büyük yazı modu | `localStorage` ile kalıcı, CSS `html.large-text` (rem ölçekleme) |
 | Offline yedek | `localStorage` ile `padel_mexicano_backup` |
 
 ## Geliştirme Kuralları
 
 - **Tek dosya:** Yeni dosya oluşturma, her şey `index.html` içinde kalmalı.
-- **Bağımlılık yok:** npm/build tooling kullanılmaz; Tailwind CDN, Firebase ESM CDN.
+- **Bağımlılık yok:** npm/build tooling kullanılmaz; düz CSS, Firebase ESM CDN.
 - **Türkçe UI:** Kullanıcıya dönük tüm metinler Türkçe.
 - **Mobile-first:** Viewport `max-scale=1.0, user-scalable=0`, tüm değişiklikler mobilde test edilmeli.
 - **Firebase config:** `__firebase_config` ve `__app_id` runtime'da inject edilir; yoksa boş obje / default değerlerle offline modda çalışır.
@@ -53,20 +53,24 @@
 ## Kod Yapısı (index.html)
 
 ```
-<head>        — Tailwind config, Google Fonts, global CSS (large-text modu dahil)
-<body>        — Toast, ana kart, liderlik tablosu, turlar, aksiyon butonları
-  Modals:     — settingsModal (3 tab), confirmModal
-<script>      — Firebase init, state yönetimi, render fonksiyonları, event listenerlar
+<head>        — Google Fonts, CSS token'ları (:root), rem tabanlı stiller (büyük yazı: html.large-text)
+<body>        — #toast, #app (tüm ekranlar JS ile çizilir), <dialog id="confirmDialog">
+<script>      — Firebase init, migrasyon, puanlama, hash yönlendirme, render fonksiyonları, olay yönetimi
 ```
+
+Ekranlar (hash route): `#/` turnuvalar listesi · `#/yeni` (ve `#/yeni/kopya/<id>`) yeni turnuva ·
+`#/duzenle/<id>` düzenleme · `#/t/<id>` turnuva (bitmemişse canlı skor, bitmişse özet/podyum).
+
+Turnuvada ek alanlar: `date` (YYYY-MM-DD), `startTime` (HH:MM); `time` eski sürüm uyumu için doldurulur.
 
 ## Kritik JS Fonksiyonları
 
-- `migrateOldData()` — eski tek-turnuvalı veriyi yeni formata taşır
-- `renderLeaderboard()` — sıralama; önce puan, eşitlikte sayı farkı
-- `renderRounds()` — tur kartlarını, skor inputlarını çizer
-- `generateRound()` — Mexicano eşleştirme algoritması (puana göre çiftler)
-- `saveScores()` — Firestore'a yazar + lokal backup
-- `applyEasyReadingMode()` — büyük yazı modunu açar/kapar
+- `migrateOldData()` — eski veriyi yeni formata taşır (eski `time` metninden `date`/`startTime` çıkarır)
+- `standings()` — sıralama; toplam puan, sadece kurala uygun maçlar sayılır
+- `generateRound()` — Mexicano eşleştirme (puana göre #1+#N vs #2+#N-1)
+- `onScoreInput()` — skor girişi; kaybedenin skoru girilince kazanan otomatik 24, anında kaydeder
+- `save()` — Firestore'a yazar + lokal backup
+- `render()` / `refreshLiveParts()` — tam çizim / skor yazarken odak bozmadan kısmi güncelleme
 
 ## Git & Deploy
 
