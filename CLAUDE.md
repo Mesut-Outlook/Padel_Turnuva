@@ -1,85 +1,81 @@
-# Padel Turnuva — CLAUDE.md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Proje Özeti
 
-**Padel Bireysel Mexicano** — tek HTML dosyasından oluşan, Firebase destekli gerçek zamanlı padel turnuva yönetim uygulaması.
+**Padel Bireysel Mexicano** — Firebase destekli, gerçek zamanlı padel turnuva yönetimi. Tüm uygulama tek dosyada: `index.html` (düz CSS + vanilla JS ES module + Firebase ESM CDN). Build, npm bağımlılığı veya test altyapısı yok.
 
-- **Tek dosya mimarisi:** Tüm uygulama `index.html` içinde (HTML + Tailwind CSS + vanilla JS + Firebase ESM imports).
-- **Backend:** Firebase Firestore (realtime) + Firebase Auth (anonim veya custom token).
-- **Deploy:** GitHub Pages üzerinden (`push_to_github.sh` ile push, repo: `Mesut-Outlook/Padel_Turnuva`).
+- **Tek dosya:** Yeni dosya oluşturma, her şey `index.html` içinde kalır.
+- **Türkçe UI:** Kullanıcıya dönük tüm metinler Türkçe.
+- **Mobile-first:** Uygulama telefondan, maç sırasında kullanılıyor; dokunma hedefleri ≥44px, ölçüler `rem` (büyük yazı modu `html.large-text` kök font boyutunu büyütür).
 
-## Oyun Kuralları (Mexicano)
+## Komutlar
 
-- Her maç **24 sayıda** biter.
-- **23-23** olursa tie-break oynanır, sisteme **24-23** girilir.
-- Kazanan takımın her oyuncusu **+5 bonus puan** alır (toplam 29 puan).
+```bash
+# Yerelde çalıştır (ES module olduğu için file:// değil, sunucu gerekir)
+python3 -m http.server 8765        # → http://localhost:8765/
 
-## Veri Yapısı (Firestore)
+# Sözdizimi kontrolü (test altyapısı yok; inline module script'i ayıklayıp node ile kontrol et)
+python3 -c "import re;s=open('index.html').read();open('/tmp/chk.mjs','w').write(re.search(r'<script type=\"module\">(.*?)</script>',s,re.S).group(1))" && node --check /tmp/chk.mjs
+
+# Deploy: main'e push → GitHub Pages (~1 dk)
+git push origin main               # veya ./push_to_github.sh "fix: mesaj"
+# https://mesut-outlook.github.io/Padel_Turnuva/
+
+# Firestore kurallarını yüklemek için (firebase-tools ~/.npm-global/bin altında kurulu)
+~/.npm-global/bin/firebase deploy --only firestore:rules --project padel-mexicano-turnuva
+```
+
+**Dikkat:** Yerel sunucu da canlı Firestore'a bağlanır. Localhost'ta yapılan her skor/tur değişikliği gerçek turnuva verisine yazılır. Canlı veriye dokunmadan test etmek için `firebaseConfig`'i geçici olarak boş obje yap (uygulama yerel moda düşer) ve commitlemeden geri al.
+
+## Oyun Kuralları ve Puanlama
+
+- Maç **24 sayıda** biter; **23-23** olursa tie-break oynanır ve **24-23** girilir.
+- Oyuncu, takımının aldığı sayı kadar puan alır; kazanan takım (24) **+5 bonus** alır → 29.
+- Sıralama **toplam puana** göre (ortalama kullanılmaz — kullanıcı açıkça istemedi). Sadece kurala uygun maçlar sayılır: tam olarak bir takım 24 olmalı (`matchResult()` aksi halde `invalid` döner).
+- Skor girişinde kaybedenin skoru yazılınca kazanan otomatik 24 olur (`onScoreInput()`).
+
+## Eşleştirme (`generateRound()`)
+
+1. tur: aktif oyuncular karıştırılır (puanlar 0). Sonraki turlar:
+- Önce en az maç oynamış olanlar seçilir (dinlenen oyuncu sonraki tura öncelikli girer), sonra puana göre sıralanır.
+- Takımlar `#1+#N, #2+#(N-1), …`; ardışık iki takım aynı sahada → 8 oyuncu: Saha 1 `[#1+#8] vs [#2+#7]`, Saha 2 `[#3+#6] vs [#4+#5]`.
+- Saha adı `courtNames[k]`'dan gelir; sadece rakamsa `Saha N`, boşsa `Kort k+1`.
+
+## Veri ve Senkronizasyon
+
+Tüm durum tek bir Firestore belgesinde: `artifacts/{appId}/public/data/mexicano/state` (`appId` varsayılan `default-app-id`). Aynı yapı `localStorage['padel_mexicano_backup']`'ta yedeklenir.
 
 ```js
 {
-  playersPool: [{ id, name }],           // Global oyuncu havuzu
+  playersPool: [{ id, name }],
   tournaments: [{
-    id, name, court, courtCount,         // Turnuva bilgileri
-    time, activePlayerIds,               // Aktif oyuncular
-    rounds: [{ id, number, matches: [    // Turlar
-      { id, court, team1: [pid], team2: [pid], score1, score2 }
-    ]}],
-    createdAt, isFinished
+    id, name, court /* tesis */, courtCount, courtNames: [string],
+    date /* YYYY-MM-DD */, startTime /* HH:MM */, time /* eski sürüm uyumu için metin */,
+    activePlayerIds: [id], isFinished, createdAt,
+    rounds: [{ matches: [{ court, t1p1, t1p2, t2p1, t2p2 /* {id, name} */, score1, score2 /* number|null */ }] }]
   }],
-  currentTournamentId: string
+  currentTournamentId
 }
 ```
 
-## Temel Özellikler
+- `save()` her değişiklikte **tüm belgeyi** `setDoc` ile yazar (son yazan kazanır; alan bazlı birleştirme yok). Firestore `undefined` kabul etmez — yeni alanlarda `''`/`null` kullan.
+- `onSnapshot` gelen veriyi `migrateOldData()`'dan geçirir; eski formatları (tek turnuvalı yapı, `time` metni → `date/startTime`) yerinde taşır. Yeni alan eklerken varsayılanını burada ver.
+- Belge yoksa ilk bağlanan cihaz kendi `localStorage` yedeğini buluta yükler.
+- Firebase'e bağlanılamazsa `goOffline()` → yalnızca `localStorage` ile çalışır ("Yerel" rozeti).
+- Firestore kuralları (repoda değil, CLI ile yüklü): sadece yukarıdaki belge okunabilir/yazılabilir; yazma `playersPool` ve `tournaments` anahtarlarını içermeli. Anonim giriş Firebase'de açık değil; kod girişi dener, başarısız olursa oturumsuz devam eder. Yani linki bilen herkes yazabilir.
 
-| Özellik | Açıklama |
-|---|---|
-| Canlı sıralama tablosu | Firestore `onSnapshot` ile anlık |
-| Oyuncu eşleştirme | Dinamik, puana göre dengeli (Mexicano mantığı) |
-| Çok turnuva desteği | Aynı oyuncu havuzundan birden fazla turnuva |
-| Son turu geri al | Tur silinebilir (onay diyaloğu ile) |
-| Büyük yazı modu | `localStorage` ile kalıcı, CSS `html.large-text` (rem ölçekleme) |
-| Offline yedek | `localStorage` ile `padel_mexicano_backup` |
+## Arayüz Mimarisi (`index.html` içindeki script)
 
-## Geliştirme Kuralları
+- **Hash yönlendirme** (`route()`): `#/` liste · `#/yeni`, `#/yeni/kopya/<id>` yeni turnuva · `#/duzenle/<id>` düzenleme · `#/t/<id>` turnuva (bitmemişse canlı skor `renderLive()`, bitmişse özet/podyum `renderSummary()`).
+- **Çizim:** `render()` aktif ekranın HTML string'ini `#app`'e basar ve odaktaki input'u/imleci geri yükler. Kullanıcı verisi (isimler) HTML'e her zaman `esc()` ile girer.
+- **Olaylar:** `#app` üzerinde tek `click`/`input`/`change` dinleyicisi; butonlar `data-action="..."` ile yönlendirilir (switch bloğu).
+- **Skor yazarken tam çizim yapılmaz:** mobilde klavye kapanmasın diye `refreshLiveParts()` sadece sıralama tablosunu, maç kartı sınıflarını (`paintMatch()`), sayaç ve sonraki tur butonunu günceller. Uzaktan gelen snapshot da odak bir skor kutusundaysa aynı yolu kullanır. Tam `render()` sonrası `paintAll()` çağrılmalı (kazanan/hata görünümü CSS sınıflarıyla verilir).
+- Form durumu modül değişkeni `form`'da tutulur; metin input'ları yeniden çizim tetiklemez, yapı değiştiren aksiyonlar (saha sayısı, oyuncu seçimi) tetikler.
+- Onaylar `<dialog id="confirmDialog">` ile (`askConfirm()`), bildirimler `showToast()` ile; `alert/confirm` kullanılmaz.
+- Renkler `:root` CSS token'larında: antrasit zemin + tek vurgu rengi padel topu limonu (`--lime`). Mor/indigo "AI görünümü" paletinden kaçınılması istendi.
 
-- **Tek dosya:** Yeni dosya oluşturma, her şey `index.html` içinde kalmalı.
-- **Bağımlılık yok:** npm/build tooling kullanılmaz; düz CSS, Firebase ESM CDN.
-- **Türkçe UI:** Kullanıcıya dönük tüm metinler Türkçe.
-- **Mobile-first:** Viewport `max-scale=1.0, user-scalable=0`, tüm değişiklikler mobilde test edilmeli.
-- **Firebase:** proje `padel-mexicano-turnuva`; config `index.html` içinde (runtime `__firebase_config` varsa o kullanılır). Kurallar sadece `artifacts/{appId}/public/data/mexicano/state` belgesini açar; anonim giriş isteğe bağlı.
+## Git
 
-## Kod Yapısı (index.html)
-
-```
-<head>        — Google Fonts, CSS token'ları (:root), rem tabanlı stiller (büyük yazı: html.large-text)
-<body>        — #toast, #app (tüm ekranlar JS ile çizilir), <dialog id="confirmDialog">
-<script>      — Firebase init, migrasyon, puanlama, hash yönlendirme, render fonksiyonları, olay yönetimi
-```
-
-Ekranlar (hash route): `#/` turnuvalar listesi · `#/yeni` (ve `#/yeni/kopya/<id>`) yeni turnuva ·
-`#/duzenle/<id>` düzenleme · `#/t/<id>` turnuva (bitmemişse canlı skor, bitmişse özet/podyum).
-
-Turnuvada ek alanlar: `date` (YYYY-MM-DD), `startTime` (HH:MM); `time` eski sürüm uyumu için doldurulur.
-
-## Kritik JS Fonksiyonları
-
-- `migrateOldData()` — eski veriyi yeni formata taşır (eski `time` metninden `date`/`startTime` çıkarır)
-- `standings()` — sıralama; toplam puan, sadece kurala uygun maçlar sayılır
-- `generateRound()` — Mexicano eşleştirme (puana göre #1+#N vs #2+#N-1)
-- `onScoreInput()` — skor girişi; kaybedenin skoru girilince kazanan otomatik 24, anında kaydeder
-- `save()` — Firestore'a yazar + lokal backup
-- `render()` / `refreshLiveParts()` — tam çizim / skor yazarken odak bozmadan kısmi güncelleme
-
-## Git & Deploy
-
-```bash
-# Manuel push
-./push_to_github.sh
-
-# GitHub Pages URL
-https://mesut-outlook.github.io/Padel_Turnuva/
-```
-
-Commit mesajları Türkçe veya İngilizce olabilir; `feat:`, `fix:`, `style:`, `refactor:` prefix'leri kullanılır.
+Commit mesajları Türkçe veya İngilizce; `feat:`, `fix:`, `style:`, `refactor:`, `chore:` önekleri. `push_to_github.sh` sadece `index.html` ve kendisini stage'ler.
